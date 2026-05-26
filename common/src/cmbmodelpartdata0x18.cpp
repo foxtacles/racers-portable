@@ -99,8 +99,6 @@ LegoBool32 CmbModelPartData0x18::InterpolatePosition(
 	LegoU16 p_frameCount
 ) const
 {
-	STUB(0x0040e670);
-
 	LegoU16 keyCount = p_track.m_positionKeyCount;
 	if (keyCount == 0) {
 		return FALSE;
@@ -163,8 +161,6 @@ LegoBool32 CmbModelPartData0x18::InterpolateRotation(
 	LegoU16 p_frameCount
 ) const
 {
-	STUB(0x0040e830);
-
 	LegoU16 keyCount = p_track.m_rotationKeyCount;
 	if (keyCount == 0) {
 		return FALSE;

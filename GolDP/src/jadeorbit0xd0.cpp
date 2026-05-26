@@ -136,10 +136,44 @@ void JadeOrbit0xd0::VTable0x24(GolVec3* p_right, GolVec3* p_forward)
 	m_unk0x10.m_m[2][2] = right.m_z;
 }
 
-// STUB: GOLDP 0x10002b20
-void JadeOrbit0xd0::VTable0x28()
+// FUNCTION: GOLDP 0x10002b20
+void JadeOrbit0xd0::VTable0x28(GolVec3* p_up, GolVec3* p_right)
 {
-	STUB(0x10002b20);
+	GolVec3 up;
+	GolMath::NormalizeVector3(*p_up, &up);
+
+	LegoFloat dot = p_right->m_y;
+	dot *= up.m_y;
+	dot += up.m_z * p_right->m_z;
+	dot += up.m_x * p_right->m_x;
+
+	GolVec3 right;
+	right.m_x = p_right->m_x - (up.m_x * dot);
+	right.m_y = p_right->m_y - (up.m_y * dot);
+	right.m_z = p_right->m_z - (up.m_z * dot);
+	GolMath::NormalizeVector3(right, &right);
+
+	GolVec3 forward;
+	forward.m_x = up.m_z;
+	forward.m_x *= right.m_y;
+	forward.m_x -= right.m_z * up.m_y;
+	forward.m_y = right.m_z * up.m_x;
+	LegoFloat upZRightX = up.m_z;
+	upZRightX *= right.m_x;
+	forward.m_y -= upZRightX;
+	forward.m_z = up.m_y;
+	forward.m_z *= right.m_x;
+	forward.m_z -= right.m_y * up.m_x;
+
+	m_unk0x10.m_m[0][0] = up.m_x;
+	m_unk0x10.m_m[0][1] = up.m_y;
+	m_unk0x10.m_m[0][2] = up.m_z;
+	m_unk0x10.m_m[1][0] = forward.m_x;
+	m_unk0x10.m_m[1][1] = forward.m_y;
+	m_unk0x10.m_m[1][2] = forward.m_z;
+	m_unk0x10.m_m[2][0] = right.m_x;
+	m_unk0x10.m_m[2][1] = right.m_y;
+	m_unk0x10.m_m[2][2] = right.m_z;
 }
 
 // FUNCTION: GOLDP 0x10002c10
@@ -178,34 +212,53 @@ void JadeOrbit0xd0::VTable0x0c(const GolVec3* p_src, GolVec3* p_dest)
 	p_dest->m_z += m_unk0x10.m_m[2][2] * p_src->m_z;
 }
 
-// STUB: GOLDP 0x10002d00
+// FUNCTION: GOLDP 0x10002d00
 void JadeOrbit0xd0::VTable0x08(const GolVec3* p_src, GolVec3* p_dest)
 {
-	p_dest->m_x = m_unk0x10.m_m[0][0] * p_src->m_x;
+	LegoFloat product = m_unk0x10.m_m[0][0];
+	product *= p_src->m_x;
+	p_dest->m_x = product;
 	p_dest->m_y = m_unk0x10.m_m[1][0] * p_src->m_x;
-	p_dest->m_z = m_unk0x10.m_m[2][0] * p_src->m_x;
+	product = m_unk0x10.m_m[2][0];
+	product *= p_src->m_x;
+	p_dest->m_z = product;
 
 	p_dest->m_x = (p_src->m_y * m_unk0x10.m_m[0][1]) + p_dest->m_x;
 	p_dest->m_y = (p_src->m_y * m_unk0x10.m_m[1][1]) + p_dest->m_y;
-	p_dest->m_z = (m_unk0x10.m_m[2][1] * p_src->m_y) + p_dest->m_z;
+	product = m_unk0x10.m_m[2][1];
+	product *= p_src->m_y;
+	p_dest->m_z = product + p_dest->m_z;
 
 	p_dest->m_x = (p_src->m_z * m_unk0x10.m_m[0][2]) + p_dest->m_x;
 	p_dest->m_y = (p_src->m_z * m_unk0x10.m_m[1][2]) + p_dest->m_y;
-	p_dest->m_z = (m_unk0x10.m_m[2][2] * p_src->m_z) + p_dest->m_z;
+	product = m_unk0x10.m_m[2][2];
+	product *= p_src->m_z;
+	p_dest->m_z = product + p_dest->m_z;
 
 	LegoFloat offset = m_unk0x10.m_m[3][0] * m_unk0x10.m_m[0][0];
-	offset += m_unk0x10.m_m[0][1] * m_unk0x10.m_m[3][1];
+	product = m_unk0x10.m_m[0][1];
+	product *= m_unk0x10.m_m[3][1];
+	offset += product;
 	offset += m_unk0x10.m_m[3][2] * m_unk0x10.m_m[0][2];
 	p_dest->m_x -= offset;
 
 	offset = m_unk0x10.m_m[3][2] * m_unk0x10.m_m[1][2];
-	offset += m_unk0x10.m_m[1][1] * m_unk0x10.m_m[3][1];
-	offset += m_unk0x10.m_m[3][0] * m_unk0x10.m_m[1][0];
+	product = m_unk0x10.m_m[1][1];
+	product *= m_unk0x10.m_m[3][1];
+	offset += product;
+	product = m_unk0x10.m_m[3][0];
+	product *= m_unk0x10.m_m[1][0];
+	offset += product;
 	p_dest->m_y -= offset;
 
-	offset = m_unk0x10.m_m[2][2] * m_unk0x10.m_m[3][2];
-	offset += m_unk0x10.m_m[2][1] * m_unk0x10.m_m[3][1];
-	offset += m_unk0x10.m_m[3][0] * m_unk0x10.m_m[2][0];
+	offset = m_unk0x10.m_m[2][2];
+	offset *= m_unk0x10.m_m[3][2];
+	product = m_unk0x10.m_m[2][1];
+	product *= m_unk0x10.m_m[3][1];
+	offset += product;
+	product = m_unk0x10.m_m[3][0];
+	product *= m_unk0x10.m_m[2][0];
+	offset += product;
 	p_dest->m_z -= offset;
 }
 
@@ -284,10 +337,14 @@ void JadeOrbit0xd0::GetRight(GolVec3* p_right)
 	p_right->m_z = m_unk0x10.m_m[2][2];
 }
 
-// STUB: GOLDP 0x10002fb0
-void JadeOrbit0xd0::VTable0x3c()
+// FUNCTION: GOLDP 0x10002fb0
+LegoFloat JadeOrbit0xd0::VTable0x3c(GolVec3* p_position)
 {
-	STUB(0x10002fb0);
+	LegoFloat x = m_unk0x10.m_m[3][0] - p_position->m_x;
+	LegoFloat y = m_unk0x10.m_m[3][1] - p_position->m_y;
+	LegoFloat z = m_unk0x10.m_m[3][2] - p_position->m_z;
+
+	return (x * x) + (y * y) + (z * z);
 }
 
 // FUNCTION: GOLDP 0x10002fe0
@@ -306,16 +363,39 @@ void JadeOrbit0xd0::SetPosition(GolVec3* p_position)
 	m_unk0x10.m_m[3][2] = p_position->m_z;
 }
 
-// STUB: GOLDP 0x10003020
-void JadeOrbit0xd0::VTable0x14()
+// FUNCTION: GOLDP 0x10003020
+void JadeOrbit0xd0::VTable0x14(GolQuat* p_rotation)
 {
-	STUB(0x10003020);
+	GolMatrix34 basis;
+	basis.m_m[0][0] = m_unk0x10.m_m[0][0];
+	basis.m_m[0][1] = m_unk0x10.m_m[0][1];
+	basis.m_m[0][2] = m_unk0x10.m_m[0][2];
+	basis.m_m[1][0] = m_unk0x10.m_m[1][0];
+	basis.m_m[1][1] = m_unk0x10.m_m[1][1];
+	basis.m_m[1][2] = m_unk0x10.m_m[1][2];
+	basis.m_m[2][0] = m_unk0x10.m_m[2][0];
+	basis.m_m[2][1] = m_unk0x10.m_m[2][1];
+	basis.m_m[2][2] = m_unk0x10.m_m[2][2];
+
+	GolMath::FUN_1002f5a0(basis, p_rotation);
 }
 
-// STUB: GOLDP 0x10003080
-void JadeOrbit0xd0::VTable0x48()
+// FUNCTION: GOLDP 0x10003080
+void JadeOrbit0xd0::VTable0x48(JadeOrbitBase0x10* p_source)
 {
-	STUB(0x10003080);
+	JadeOrbit0xd0* source = static_cast<JadeOrbit0xd0*>(p_source);
+	m_unk0x10.m_m[0][0] = source->m_unk0x10.m_m[0][0];
+	m_unk0x10.m_m[0][1] = source->m_unk0x10.m_m[0][1];
+	m_unk0x10.m_m[0][2] = source->m_unk0x10.m_m[0][2];
+	m_unk0x10.m_m[1][0] = source->m_unk0x10.m_m[1][0];
+	m_unk0x10.m_m[1][1] = source->m_unk0x10.m_m[1][1];
+	m_unk0x10.m_m[1][2] = source->m_unk0x10.m_m[1][2];
+	m_unk0x10.m_m[2][0] = source->m_unk0x10.m_m[2][0];
+	m_unk0x10.m_m[2][1] = source->m_unk0x10.m_m[2][1];
+	m_unk0x10.m_m[2][2] = source->m_unk0x10.m_m[2][2];
+	m_unk0x10.m_m[3][0] = source->m_unk0x10.m_m[3][0];
+	m_unk0x10.m_m[3][1] = source->m_unk0x10.m_m[3][1];
+	m_unk0x10.m_m[3][2] = source->m_unk0x10.m_m[3][2];
 }
 
 // FUNCTION: GOLDP 0x10029920 FOLDED

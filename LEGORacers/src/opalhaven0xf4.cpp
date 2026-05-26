@@ -75,8 +75,6 @@ void OpalHaven0xf4::FUN_0040d650()
 // STUB: LEGORACERS 0x0040d670
 void OpalHaven0xf4::VTable0x5c(LegoU32 p_index)
 {
-	STUB(0x0040d670);
-
 	if (!(m_flags & c_flagPartAnimation)) {
 		return;
 	}
@@ -205,8 +203,6 @@ void OpalHaven0xf4::FUN_0040dad0(undefined2 p_partIndex)
 // STUB: LEGORACERS 0x0040dae0
 void OpalHaven0xf4::FUN_0040dae0(LegoU16 p_partIndex, LegoS32 p_timeScale)
 {
-	STUB(0x0040dae0);
-
 	FUN_0040d650();
 
 	LegoU32 flags = m_flags;
@@ -316,8 +312,6 @@ void OpalHaven0xf4::FUN_0040db80(
 // STUB: LEGORACERS 0x0040dd60
 void OpalHaven0xf4::VTable0x10(LegoS32 p_elapsed)
 {
-	STUB(0x0040dd60);
-
 	m_flags &= ~c_flagLoopWrapped;
 	if (!(m_flags & c_flagPartAnimation)) {
 		SilverHollow0xb8::VTable0x10(p_elapsed);
@@ -413,8 +407,6 @@ void OpalHaven0xf4::VTable0x10(LegoS32 p_elapsed)
 // STUB: LEGORACERS 0x0040e0b0
 void OpalHaven0xf4::VTable0x4c(LegoU32 p_index)
 {
-	STUB(0x0040e0b0);
-
 	IGdbModel0x40* model = m_models[p_index];
 	if (model == NULL) {
 		FUN_10026fa0(0.0f);
