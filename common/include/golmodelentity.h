@@ -11,15 +11,6 @@ struct MaterialTable0x0c;
 class GolSceneNode;
 class GolWorldDatabase;
 
-// The core 0x00..0x8f layout can be found in both GOLDP and LEGORACERS.
-// GOLDP array construction proves this complete class has a 0x90-byte stride.
-// There is some structural overlap in the subsequent fields between
-// - GolSkinnedEntity (GOLDP, subclass)
-// - OpalHaven0xf4 (LEGORACERS, subclass)
-// - GlassShard0x3b8 (LEGORACERS, member field)
-// but inserting an intermediate subclass with these shared fields leads to mismatches.
-// Furthermore, SordidWatch0x140 (LEGORACERS) has a member of this type with different subsequent fields.
-//
 // VTABLE: GOLDP 0x10057270
 // VTABLE: LEGORACERS 0x004af754
 // SIZE 0x90

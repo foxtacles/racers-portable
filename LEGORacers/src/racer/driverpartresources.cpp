@@ -1,6 +1,7 @@
-#include "util/garnetflare0x60.h"
+#include "racer/driverpartresources.h"
 
 #include "core/gol.h"
+#include "golanimatedentity.h"
 #include "golerror.h"
 #include "golhashtable.h"
 #include "golname.h"
@@ -14,12 +15,11 @@
 #include "mesh/igdbmodelindexarray0x8.h"
 #include "racer/lavendervault0x764.h"
 #include "render/gold3drenderdevice.h"
-#include "scene/golskinnedentity.h"
 #include "world/golworlddatabase.h"
 
 #include <string.h>
 
-DECOMP_SIZE_ASSERT(GarnetFlare0x60, 0x60)
+DECOMP_SIZE_ASSERT(DriverPartResources, 0x60)
 
 static const LegoChar g_gdbFaceMaterialName[] = "face";
 
@@ -34,19 +34,19 @@ static LegoS32 SetResourceBinaryMode(LegoS32 p_binary)
 }
 
 // FUNCTION: LEGORACERS 0x00497e40
-GarnetFlare0x60::GarnetFlare0x60()
+DriverPartResources::DriverPartResources()
 {
 	Reset();
 }
 
 // FUNCTION: LEGORACERS 0x00497e90
-GarnetFlare0x60::~GarnetFlare0x60()
+DriverPartResources::~DriverPartResources()
 {
 	ReleaseResources();
 }
 
 // FUNCTION: LEGORACERS 0x00497ee0
-LegoS32 GarnetFlare0x60::Reset()
+LegoS32 DriverPartResources::Reset()
 {
 	m_golExport = NULL;
 	m_renderer = NULL;
@@ -67,7 +67,7 @@ LegoS32 GarnetFlare0x60::Reset()
 }
 
 // FUNCTION: LEGORACERS 0x00497f10
-GolWorldDatabase* GarnetFlare0x60::FUN_00497f10(const LoadParams* p_params, LegoS32 p_resourceIndex)
+GolWorldDatabase* DriverPartResources::FUN_00497f10(const LoadParams* p_params, LegoS32 p_resourceIndex)
 {
 	ReleaseResources();
 	m_golExport = p_params->m_golExport;
@@ -91,7 +91,7 @@ GolWorldDatabase* GarnetFlare0x60::FUN_00497f10(const LoadParams* p_params, Lego
 }
 
 // FUNCTION: LEGORACERS 0x00497fb0
-LegoBool32 GarnetFlare0x60::ReleaseResources()
+LegoBool32 DriverPartResources::ReleaseResources()
 {
 	if (m_partResource == NULL) {
 		return TRUE;
@@ -115,7 +115,7 @@ LegoBool32 GarnetFlare0x60::ReleaseResources()
 }
 
 // FUNCTION: LEGORACERS 0x00498020
-void GarnetFlare0x60::LoadPartResource(LegoBool32 p_binary)
+void DriverPartResources::LoadPartResource(LegoBool32 p_binary)
 {
 	LegoChar fileName[16];
 	::strcpy(fileName, m_partConfig->GetBodyModelFileName(m_resourceIndex));
@@ -141,7 +141,7 @@ void GarnetFlare0x60::LoadPartResource(LegoBool32 p_binary)
 }
 
 // FUNCTION: LEGORACERS 0x00498120
-void GarnetFlare0x60::LoadMaterialAndTextureLists(LegoBool32 p_binary)
+void DriverPartResources::LoadMaterialAndTextureLists(LegoBool32 p_binary)
 {
 	m_textureList = m_golExport->CreateTextureList();
 	m_materialList = m_golExport->CreateMaterialList();
@@ -157,7 +157,7 @@ void GarnetFlare0x60::LoadMaterialAndTextureLists(LegoBool32 p_binary)
 
 // STUB: LEGORACERS 0x004981a0
 static LegoU32 __stdcall ReplaceModelGroupMaterialIndex(
-	GolSkinnedEntity* p_resourceModel,
+	GolAnimatedEntity* p_resourceModel,
 	LegoU32 p_oldIndex,
 	LegoU32 p_newIndex
 )
@@ -184,13 +184,13 @@ static LegoU32 __stdcall ReplaceModelGroupMaterialIndex(
 }
 
 // STUB: LEGORACERS 0x004981f0
-void GarnetFlare0x60::NormalizeHeadGroupOrder()
+void DriverPartResources::NormalizeHeadGroupOrder()
 {
 	STUB(0x004981f0);
 
 	LegoS32 remainingModels = m_partResource->GetUnk0x54();
 	if (remainingModels > 0) {
-		GolSkinnedEntity* resourceModel = m_partResource->GetUnk0xa0();
+		GolAnimatedEntity* resourceModel = m_partResource->GetUnk0xa0();
 		do {
 			MaterialTable0x0c* materialTable = resourceModel->GetMaterialTable(0);
 			if (materialTable == NULL) {
@@ -229,7 +229,7 @@ void GarnetFlare0x60::NormalizeHeadGroupOrder()
 }
 
 // FUNCTION: LEGORACERS 0x00498300
-void GarnetFlare0x60::ComputeMaxVertexCounts()
+void DriverPartResources::ComputeMaxVertexCounts()
 {
 	GdbVertexArray0xc* vertexArray;
 	for (LegoS32 bodyIndex = 0; bodyIndex < static_cast<LegoS32>(m_partResource->GetUnk0x54()); bodyIndex++) {
@@ -252,7 +252,7 @@ void GarnetFlare0x60::ComputeMaxVertexCounts()
 }
 
 // FUNCTION: LEGORACERS 0x004983a0
-void GarnetFlare0x60::ComputeMaxIndexCounts()
+void DriverPartResources::ComputeMaxIndexCounts()
 {
 	for (LegoS32 bodyIndex = 0; bodyIndex < static_cast<LegoS32>(m_partResource->GetUnk0x54()); bodyIndex++) {
 		GolModelBase* model = FUN_00498510(bodyIndex);
@@ -272,7 +272,7 @@ void GarnetFlare0x60::ComputeMaxIndexCounts()
 }
 
 // FUNCTION: LEGORACERS 0x00498410
-void GarnetFlare0x60::ComputeMaxGroupCounts()
+void DriverPartResources::ComputeMaxGroupCounts()
 {
 	for (LegoS32 bodyIndex = 0; bodyIndex < static_cast<LegoS32>(m_partResource->GetUnk0x54()); bodyIndex++) {
 		GolModelBase* model = FUN_00498510(bodyIndex);
@@ -292,7 +292,7 @@ void GarnetFlare0x60::ComputeMaxGroupCounts()
 }
 
 // FUNCTION: LEGORACERS 0x00498470
-void GarnetFlare0x60::ComputeMaxMaterialCounts()
+void DriverPartResources::ComputeMaxMaterialCounts()
 {
 	for (LegoS32 bodyIndex = 0; bodyIndex < static_cast<LegoS32>(m_partResource->GetUnk0x54()); bodyIndex++) {
 		GolModelBase* model = FUN_00498510(bodyIndex);
@@ -312,7 +312,7 @@ void GarnetFlare0x60::ComputeMaxMaterialCounts()
 }
 
 // FUNCTION: LEGORACERS 0x004984d0
-GolModelBase* GarnetFlare0x60::FUN_004984d0(LegoS32 p_index)
+GolModelBase* DriverPartResources::FUN_004984d0(LegoS32 p_index)
 {
 	GolName name;
 	m_partConfig->CopyHeadHatName(p_index, name);
@@ -321,7 +321,7 @@ GolModelBase* GarnetFlare0x60::FUN_004984d0(LegoS32 p_index)
 }
 
 // FUNCTION: LEGORACERS 0x00498510
-GolModelBase* GarnetFlare0x60::FUN_00498510(LegoS32 p_index)
+GolModelBase* DriverPartResources::FUN_00498510(LegoS32 p_index)
 {
 	GolName name;
 	if (m_resourceIndex == 1) {
@@ -331,12 +331,12 @@ GolModelBase* GarnetFlare0x60::FUN_00498510(LegoS32 p_index)
 		m_partConfig->FUN_00499070(p_index, name);
 	}
 
-	GolSkinnedEntity* model = m_partResource->FindUnk0xc0(name);
+	GolAnimatedEntity* model = m_partResource->FindUnk0xc0(name);
 	return model->GetModel(0);
 }
 
 // FUNCTION: LEGORACERS 0x00498570
-GolSceneNode* GarnetFlare0x60::FUN_00498570(LegoS32 p_index)
+GolSceneNode* DriverPartResources::FUN_00498570(LegoS32 p_index)
 {
 	GolName name;
 	if (m_resourceIndex == 1) {
@@ -346,12 +346,12 @@ GolSceneNode* GarnetFlare0x60::FUN_00498570(LegoS32 p_index)
 		m_partConfig->FUN_00499070(p_index, name);
 	}
 
-	GolSkinnedEntity* model = m_partResource->FindUnk0xc0(name);
+	GolAnimatedEntity* model = m_partResource->FindUnk0xc0(name);
 	return model->VTable0x58(0);
 }
 
 // FUNCTION: LEGORACERS 0x004985e0
-CmbModelPart0x34* GarnetFlare0x60::FUN_004985e0(LegoS32 p_index)
+CmbModelPart0x34* DriverPartResources::FUN_004985e0(LegoS32 p_index)
 {
 	GolName name;
 	if (m_resourceIndex == 1) {
@@ -361,12 +361,12 @@ CmbModelPart0x34* GarnetFlare0x60::FUN_004985e0(LegoS32 p_index)
 		m_partConfig->FUN_00499070(p_index, name);
 	}
 
-	GolSkinnedEntity* model = m_partResource->FindUnk0xc0(name);
+	GolAnimatedEntity* model = m_partResource->FindUnk0xc0(name);
 	return model->GetModelPart(0);
 }
 
 // FUNCTION: LEGORACERS 0x00498640
-DuskwindBananaRelic0x24* GarnetFlare0x60::FUN_00498640(LegoS32 p_index)
+DuskwindBananaRelic0x24* DriverPartResources::FUN_00498640(LegoS32 p_index)
 {
 	GolName unusedName;
 	GolName materialName;
@@ -375,7 +375,7 @@ DuskwindBananaRelic0x24* GarnetFlare0x60::FUN_00498640(LegoS32 p_index)
 }
 
 // FUNCTION: LEGORACERS 0x00498680
-DuskwindBananaRelic0x24* GarnetFlare0x60::FUN_00498680(LegoS32 p_index)
+DuskwindBananaRelic0x24* DriverPartResources::FUN_00498680(LegoS32 p_index)
 {
 	GolName unusedName;
 	GolName materialName;
@@ -384,7 +384,7 @@ DuskwindBananaRelic0x24* GarnetFlare0x60::FUN_00498680(LegoS32 p_index)
 }
 
 // FUNCTION: LEGORACERS 0x004986c0
-DuskwindBananaRelic0x24* GarnetFlare0x60::FUN_004986c0(LegoS32 p_index)
+DuskwindBananaRelic0x24* DriverPartResources::FUN_004986c0(LegoS32 p_index)
 {
 	GolName unusedName;
 	GolName materialName;
