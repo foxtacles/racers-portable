@@ -216,7 +216,10 @@ bool MiniwinGl3Backend::Init(SDL_Window* p_window)
 	}
 
 	SDL_LogInfo(LOG_CATEGORY_MINIWIN, "OpenGL renderer: %s", (const char*) gl.glGetString(GL_VERSION));
-	SDL_GL_SetSwapInterval(0); // the game has its own frame limiter
+	// The game has its own frame limiter; vsync is available for diagnosis
+	// (RACERS_VSYNC=1).
+	const char* vsyncEnv = getenv("RACERS_VSYNC");
+	SDL_GL_SetSwapInterval(vsyncEnv && vsyncEnv[0] == '1' ? 1 : 0);
 
 	GLuint vs = CompileShader(GL_VERTEX_SHADER, g_vertexShader);
 	GLuint fs = CompileShader(GL_FRAGMENT_SHADER, g_fragmentShader);

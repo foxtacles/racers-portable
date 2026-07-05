@@ -302,6 +302,23 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
+	// Stall correlation aid: window-server state changes, on when the watchdog is.
+	static const char* watchdog = getenv("RACERS_WATCHDOG");
+	if (watchdog && watchdog[0]) {
+		switch (event->type) {
+		case SDL_EVENT_WINDOW_OCCLUDED:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_MOVED:
+		case SDL_EVENT_WINDOW_DISPLAY_CHANGED:
+			SDL_Log("[window] event 0x%x at t=%llu", event->type, (unsigned long long) SDL_GetTicks());
+			break;
+		default:
+			break;
+		}
+	}
+
 	MiniwinApp_PushEvent(*event);
 	return SDL_APP_CONTINUE;
 }

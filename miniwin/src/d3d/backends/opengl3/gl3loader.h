@@ -21,6 +21,8 @@ typedef float GLclampf;
 typedef double GLdouble;
 typedef double GLclampd;
 typedef char GLchar;
+typedef struct __GLsync* GLsync;
+typedef uint64_t GLuint64;
 typedef ptrdiff_t GLsizeiptr;
 typedef ptrdiff_t GLintptr;
 
@@ -66,6 +68,8 @@ typedef ptrdiff_t GLintptr;
 #define GL_DEPTH_ATTACHMENT 0x8D00
 #define GL_DEPTH_COMPONENT24 0x81A6
 #define GL_FRAMEBUFFER_COMPLETE 0x8CD5
+#define GL_SYNC_GPU_COMMANDS_COMPLETE 0x9117
+#define GL_SYNC_FLUSH_COMMANDS_BIT 0x00000001
 #define GL_TEXTURE_BINDING_2D 0x8069
 #define GL_CURRENT_PROGRAM 0x8B8D
 #define GL_UNSIGNED_BYTE 0x1401
@@ -194,7 +198,10 @@ typedef ptrdiff_t GLintptr;
 		 GLint dstY1,                                                                                                  \
 		 GLbitfield mask,                                                                                              \
 		 GLenum filter)                                                                                                \
-	)
+	)                                                                                                                  \
+	GL3_FUNC(GLsync, glFenceSync, (GLenum condition, GLbitfield flags))                                                \
+	GL3_FUNC(GLenum, glClientWaitSync, (GLsync sync, GLbitfield flags, GLuint64 timeout))                              \
+	GL3_FUNC(void, glDeleteSync, (GLsync sync))
 
 #define GL3_FUNC(ret, name, args) typedef ret(SDLCALL* name##_t) args;
 GL3_FUNCTION_LIST

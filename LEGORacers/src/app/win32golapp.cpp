@@ -70,6 +70,12 @@ void Win32GolApp::Initialize(const LegoChar* p_windowName, const LegoChar* p_fil
 	SDL_Window* window = nullptr;
 	char title[128];
 	SDL_strlcpy(title, p_windowName ? p_windowName : "LEGO Racers", sizeof(title));
+
+	// Distinguish scripted test instances from the user's own window.
+	const char* titleOverride = getenv("RACERS_WINDOW_TITLE");
+	if (titleOverride && titleOverride[0]) {
+		SDL_strlcpy(title, titleOverride, sizeof(title));
+	}
 	MiniwinApp_RunOnMainThread([&window, &title]() {
 		Uint32 backendFlags = MiniwinBackend_PrepareWindowFlags();
 		window = SDL_CreateWindow(title, 640, 480, SDL_WINDOW_HIDDEN | backendFlags);
