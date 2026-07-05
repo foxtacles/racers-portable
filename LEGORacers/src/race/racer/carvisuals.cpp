@@ -31,8 +31,15 @@ extern const LegoFloat g_negativeRadiansToTableIndex;
 extern const LegoFloat g_carShadowScale;
 extern LegoU16 g_randomTable[1024];
 extern LegoU32 g_randomTableIndex;
-extern const LegoFloat g_shieldSoundMaxDistance;
-extern const LegoFloat g_shieldSoundMinDistance;
+extern const LegoFloat g_landingSoundMaxDistance;
+extern const LegoFloat g_landingSoundMinDistance;
+extern const LegoFloat g_wheelParticleVelocityScale;
+extern const LegoFloat g_curseChaseMinSpeed;
+extern const LegoFloat g_curseOrbitRadius;
+extern const LegoFloat g_curseHoverHeight;
+extern const LegoFloat g_unk0x004b0b18;
+extern const LegoFloat g_curseShrinkRate;
+extern const LegoFloat g_curseMinScale;
 extern const LegoFloat g_unk0x004b02e0;
 extern const LegoFloat g_unk0x004b0544;
 extern const LegoFloat g_hiddenModelDistance;
@@ -51,7 +58,7 @@ extern LegoU32 g_silhouetteClearFlag;
 extern LegoU32 g_silhouetteFlattenFlag;
 extern LegoU32 g_raceLapCount;
 extern LegoFloat g_cursePhaseScale;
-extern const LegoFloat g_violetShoalTwo;
+extern const LegoFloat g_two;
 
 // FUNCTION: LEGORACERS 0x0043d5a0
 CarVisuals::CarVisuals()
@@ -461,7 +468,7 @@ void CarVisuals::StartCarSmoke()
 
 	position.m_x = (position.m_x + other.m_x) * 0.5f;
 	position.m_y = (position.m_y + other.m_y) * 0.5f;
-	position.m_z = (position.m_z + other.m_z) * 0.5f + g_violetShoalTwo;
+	position.m_z = (position.m_z + other.m_z) * 0.5f + g_two;
 
 	CutsceneParticle* particle = ref->m_particle;
 	if (particle) {
@@ -473,7 +480,7 @@ void CarVisuals::StartCarSmoke()
 	}
 }
 
-// STUB: LEGORACERS 0x0043e070
+// FUNCTION: LEGORACERS 0x0043e070
 void CarVisuals::Update(LegoU32 p_elapsedMs)
 {
 	UpdateBodyLean(p_elapsedMs);
@@ -524,7 +531,7 @@ void CarVisuals::Update(LegoU32 p_elapsedMs)
 			m_curseBlendMs = 1000;
 		}
 
-		GolVec3 velocity = m_racerPhysics->m_velocity * 0.5f;
+		GolVec3 velocity = m_racerPhysics->m_velocity * g_wheelParticleVelocityScale;
 
 		for (LegoU32 particleIndex = 0; particleIndex < sizeOfArray(m_wheelParticles); particleIndex++) {
 			CutsceneParticleRef* ref = m_wheelParticles[particleIndex];
@@ -563,8 +570,8 @@ void CarVisuals::Update(LegoU32 p_elapsedMs)
 					m_racer->m_soundSource->PlaySpatialSoundById(
 						0x3f,
 						&position,
-						g_shieldSoundMinDistance,
-						g_shieldSoundMaxDistance,
+						g_landingSoundMinDistance,
+						g_landingSoundMaxDistance,
 						1.0f,
 						1.0f
 					);
@@ -574,8 +581,8 @@ void CarVisuals::Update(LegoU32 p_elapsedMs)
 					m_racer->m_soundSource->PlaySpatialSoundById(
 						0x40,
 						&position,
-						g_shieldSoundMinDistance,
-						g_shieldSoundMaxDistance,
+						g_landingSoundMinDistance,
+						g_landingSoundMaxDistance,
 						1.0f,
 						1.0f
 					);
@@ -584,8 +591,8 @@ void CarVisuals::Update(LegoU32 p_elapsedMs)
 					m_racer->m_soundSource->PlaySpatialSoundById(
 						4,
 						&position,
-						g_shieldSoundMinDistance,
-						g_shieldSoundMaxDistance,
+						g_landingSoundMinDistance,
+						g_landingSoundMaxDistance,
 						1.0f,
 						1.0f
 					);
@@ -636,7 +643,7 @@ void CarVisuals::Update(LegoU32 p_elapsedMs)
 				GolVec3 other = m_racerPhysics->m_wheelProbes[2].m_wheelPosition;
 				position.m_x = (position.m_x + other.m_x) * 0.5f;
 				position.m_y = (position.m_y + other.m_y) * 0.5f;
-				position.m_z = (position.m_z + other.m_z) * 0.5f + g_violetShoalTwo;
+				position.m_z = (position.m_z + other.m_z) * 0.5f + g_two;
 
 				particle = m_carSmokeParticle->m_particle;
 				if (particle) {
@@ -1132,7 +1139,7 @@ void CarVisuals::UpdateSkidMarks(LegoU32 p_elapsedMs)
 	}
 }
 
-// STUB: LEGORACERS 0x0043f530
+// FUNCTION: LEGORACERS 0x0043f530
 void CarVisuals::UpdateCurseEntity(LegoU32 p_elapsedMs)
 {
 	if (p_elapsedMs > m_cursePhaseMs) {
@@ -1161,13 +1168,13 @@ void CarVisuals::UpdateCurseEntity(LegoU32 p_elapsedMs)
 
 	GolVec3 target;
 	m_bodyModelEntity->GetPosition(&target);
-	target.m_x += 6.0f * offsetX;
-	target.m_y += 6.0f * offsetY;
-	target.m_z += 9.0f;
+	target.m_x += g_curseOrbitRadius * offsetX;
+	target.m_y += g_curseOrbitRadius * offsetY;
+	target.m_z += g_curseHoverHeight;
 
 	LegoFloat speed = m_racerPhysics->m_speed;
-	if (speed <= 0.1f) {
-		speed = 0.1f;
+	if (speed <= g_curseChaseMinSpeed) {
+		speed = g_curseChaseMinSpeed;
 	}
 
 	LegoFloat elapsed = static_cast<LegoFloat>(p_elapsedMs);
@@ -1250,10 +1257,10 @@ void CarVisuals::UpdateCurseEntity(LegoU32 p_elapsedMs)
 	}
 
 	LegoFloat scale = entity->GetScale();
-	if (scale > 0.66600001f) {
-		scale -= elapsed * 0.0099999998f * 0.065999999f;
-		if (scale < 0.66600001f) {
-			scale = 0.66600001f;
+	if (scale > g_curseMinScale) {
+		scale -= elapsed * g_unk0x004b0b18 * g_curseShrinkRate;
+		if (scale < g_curseMinScale) {
+			scale = g_curseMinScale;
 		}
 		entity->SetScaleThenInvalidateRadius(scale);
 	}

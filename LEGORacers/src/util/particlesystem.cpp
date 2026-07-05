@@ -280,8 +280,8 @@ void ParticleSystem::Update(LegoS32 p_elapsedMs)
 					else {
 						other->m_next = next;
 					}
-					current->m_next = m_freeList;
 					current->m_material = NULL;
+					current->m_next = m_freeList;
 					m_freeList = current;
 				}
 				else {
@@ -340,7 +340,7 @@ Particle* ParticleSystem::AllocateParticle()
 	}
 }
 
-// STUB: LEGORACERS 0x00412a50
+// FUNCTION: LEGORACERS 0x00412a50
 void ParticleSystem::Draw(GolD3DRenderDevice* p_renderer)
 {
 	LegoU32 flags = m_flags;

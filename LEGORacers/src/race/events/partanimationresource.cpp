@@ -70,7 +70,7 @@ void PartAnimationResource::Destroy()
 	Reset();
 }
 
-// STUB: LEGORACERS 0x004633f0
+// FUNCTION: LEGORACERS 0x004633f0
 void PartAnimationResource::Update(LegoU32 p_elapsedMs)
 {
 	RaceEventResource::Update(p_elapsedMs);
@@ -215,11 +215,3 @@ void PartAnimationResource::OnEnd()
 
 	SetState(nextState);
 }
-
-#pragma code_seg(".text$animatedpartresource_vt18")
-// FUNCTION: LEGORACERS 0x00452430 FOLDED
-LegoU32 PartAnimationResource::GetKind()
-{
-	return 1;
-}
-#pragma code_seg()

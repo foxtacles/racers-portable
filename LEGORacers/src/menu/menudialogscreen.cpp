@@ -217,7 +217,7 @@ MenuInputBindingTable* MenuDialog::DialogScreen::GetMenuInputBindings()
 	return (MenuInputBindingTable*) m_owner;
 }
 
-// STUB: LEGORACERS 0x004686f0
+// FUNCTION: LEGORACERS 0x004686f0
 void MenuDialog::DialogScreen::EnableWidgets()
 {
 	m_messageLabel.SetFlags(2);
@@ -238,7 +238,7 @@ void MenuDialog::DialogScreen::EnableWidgets()
 	}
 }
 
-// STUB: LEGORACERS 0x00468740
+// FUNCTION: LEGORACERS 0x00468740
 void MenuDialog::DialogScreen::DisableWidgets()
 {
 	m_messageLabel.ClearFlags(2);
@@ -375,10 +375,4 @@ LegoBool32 MenuDialog::DialogScreen::Update(undefined4 p_elapsedMs)
 	m_frame.SetRect(&rect);
 
 	return m_closed == 0;
-}
-
-// FUNCTION: LEGORACERS 0x0044e7e0 FOLDED
-undefined4 MenuDialog::DialogScreen::ShouldLoadResources()
-{
-	return 0;
 }

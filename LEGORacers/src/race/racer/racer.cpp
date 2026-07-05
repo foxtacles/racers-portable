@@ -50,7 +50,7 @@ extern const LegoFloat g_ghostAnimationRateScale;
 extern const LegoFloat g_ghostSampleFractionScale;
 extern const LegoFloat g_sweepCannonRadiansToTableIndex;
 extern const LegoFloat g_negativeRadiansToTableIndex;
-extern const LegoFloat g_violetShoalTwo;
+extern const LegoFloat g_two;
 extern LegoU32 g_silhouetteClearFlag;
 extern LegoU32 g_silhouetteFlattenFlag;
 extern LegoFloat g_cosineTable[1024];
@@ -58,8 +58,17 @@ extern LegoFloat g_cosineTable[1024];
 // GLOBAL: LEGORACERS 0x004b02e0
 extern const LegoFloat g_unk0x004b02e0 = 0.2f;
 
+// GLOBAL: LEGORACERS 0x004b02e4
+extern const LegoFloat g_unk0x004b02e4 = 0.0057142857f;
+
+// GLOBAL: LEGORACERS 0x004b02e8
+extern const LegoFloat g_unk0x004b02e8 = -6.0f;
+
+// GLOBAL: LEGORACERS 0x004b02ec
+extern const LegoFloat g_unk0x004b02ec = -14.0f;
+
 // GLOBAL: LEGORACERS 0x004b0424
-static const LegoFloat g_statMax = 100.0f;
+extern const LegoFloat g_statMax = 100.0f;
 
 // GLOBAL: LEGORACERS 0x004b0544
 extern const LegoFloat g_unk0x004b0544 = 0.050000001f;
@@ -102,6 +111,9 @@ extern const LegoFloat g_engineFadeVolumeScale = 2.2439947f;
 
 // GLOBAL: LEGORACERS 0x004b0998
 extern const LegoFloat g_engineVolumeRampScale = 0.059999999f;
+
+// GLOBAL: LEGORACERS 0x004b09cc
+extern const LegoFloat g_unk0x004b09cc = 0.059999999f;
 
 // GLOBAL: LEGORACERS 0x004b099c
 extern const LegoFloat g_engineVolumeRampRate = 0.030000029f;
@@ -154,6 +166,9 @@ extern const LegoFloat g_shieldShoveStrength = 200.0f;
 // GLOBAL: LEGORACERS 0x004b09dc
 extern const LegoFloat g_rubberBandScale = 0.050000001f;
 
+// GLOBAL: LEGORACERS 0x004b0a00
+extern const LegoFloat g_driverModelScale = 250000.0f;
+
 // GLOBAL: LEGORACERS 0x004b0a08
 extern const LegoFloat g_proximityPitchFloor = 0.40000001f;
 
@@ -178,11 +193,38 @@ extern const LegoFloat g_proximitySoundMaxDistance = 200.0f;
 // GLOBAL: LEGORACERS 0x004b0ac0
 extern const LegoFloat g_hiddenModelDistance = -1.0f;
 
+// GLOBAL: LEGORACERS 0x004b0ae8
+extern const LegoFloat g_landingSoundMinDistance = 30.0f;
+
+// GLOBAL: LEGORACERS 0x004b0aec
+extern const LegoFloat g_landingSoundMaxDistance = 300.0f;
+
 // GLOBAL: LEGORACERS 0x004b0af0
 extern const LegoFloat g_unk0x004b0af0 = 15.0f;
 
 // GLOBAL: LEGORACERS 0x004b0af4
 extern const LegoFloat g_shadowProbeHeight = 6.0f;
+
+// GLOBAL: LEGORACERS 0x004b0b08
+extern const LegoFloat g_wheelParticleVelocityScale = 0.60000002f;
+
+// GLOBAL: LEGORACERS 0x004b0b0c
+extern const LegoFloat g_curseChaseMinSpeed = 0.1f;
+
+// GLOBAL: LEGORACERS 0x004b0b10
+extern const LegoFloat g_curseOrbitRadius = 6.0f;
+
+// GLOBAL: LEGORACERS 0x004b0b14
+extern const LegoFloat g_curseHoverHeight = 9.0f;
+
+// GLOBAL: LEGORACERS 0x004b0b18
+extern const LegoFloat g_unk0x004b0b18 = 0.0099999998f;
+
+// GLOBAL: LEGORACERS 0x004b0b1c
+extern const LegoFloat g_curseShrinkRate = 0.065999999f;
+
+// GLOBAL: LEGORACERS 0x004b0b20
+extern const LegoFloat g_curseMinScale = 0.66600001f;
 
 // GLOBAL: LEGORACERS 0x004b0b24
 extern const LegoFloat g_lookTargetRangeSquared = 40000.0f;
@@ -1001,10 +1043,10 @@ void Racer::UpdateDriftLean()
 		value = -value;
 	}
 
-	m_visuals.m_rollLean += value * 0.059999999f;
+	m_visuals.m_rollLean += value * g_unk0x004b09cc;
 }
 
-// STUB: LEGORACERS 0x00437be0
+// FUNCTION: LEGORACERS 0x00437be0
 void Racer::UpdateSpatialSounds()
 {
 	for (LegoU32 i = 0; i <= 3; i++) {
@@ -1276,9 +1318,10 @@ void Racer::UpdateEngineSound(LegoU32 p_elapsedMs)
 
 		if (m_brakeSound) {
 			m_brakeSound->Play(TRUE);
-			LegoFloat maxDistance = g_shieldSoundMaxDistance;
-			LegoFloat minDistance = g_shieldSoundMinDistance;
-			m_brakeSound->SetDistanceRangeWithMinSquared(minDistance * minDistance, maxDistance);
+			m_brakeSound->SetDistanceRangeWithMinSquared(
+				g_shieldSoundMinDistance * g_shieldSoundMinDistance,
+				g_shieldSoundMaxDistance
+			);
 			m_brakeSound->SetPosition(position);
 			m_brakeSound->SetVelocity(velocity);
 			frequencyScale = m_physics.m_speed;
@@ -1312,7 +1355,7 @@ void Racer::StopEngineSounds()
 	}
 }
 
-// STUB: LEGORACERS 0x00438560
+// FUNCTION: LEGORACERS 0x00438560
 void Racer::OnEvent(LegoEventQueue::CallbackData* p_data)
 {
 	if (p_data->m_type == LegoEventQueue::Descriptor::c_typeTimer) {
@@ -1485,7 +1528,8 @@ void Racer::OnEvent(LegoEventQueue::CallbackData* p_data)
 			GolMath::NormalizeVector3(soundDirection, &soundDirection);
 
 			g_randomTableIndex = (g_randomTableIndex + 1) & c_randomTableMask;
-			LegoU32 soundId = (g_randomTable[g_randomTableIndex] & 1) ? 0x37 : 0x18;
+			LegoS32 randomValue = g_randomTable[g_randomTableIndex];
+			LegoU32 soundId = (randomValue % 2) ? 0x37 : 0x18;
 			m_soundSource->PlaySpatialSoundById(
 				soundId,
 				contactPosition,
@@ -1780,7 +1824,7 @@ void Racer::PlayReaction(LegoBool32 p_positive)
 	}
 }
 
-// STUB: LEGORACERS 0x00439340
+// FUNCTION: LEGORACERS 0x00439340
 void Racer::OnRaceStart()
 {
 	LegoU32 value = m_flags & 0xfffffffd;

@@ -23,14 +23,6 @@ LegoBool32 MenuIcon::IsEnabled()
 	return FALSE;
 }
 
-// FUNCTION: LEGORACERS 0x004676c0
-#pragma code_seg(".text$obscureicon_vt38")
-MenuWidget* MenuIcon::DrawSelf(Rect*, Rect*)
-{
-	return NULL;
-}
-#pragma code_seg()
-
 // FUNCTION: LEGORACERS 0x00471c30
 MenuIcon::MenuIcon()
 {

@@ -3,6 +3,7 @@
 
 #include "golmath.h"
 #include "golmodelentity.h"
+#include "managedmaterialtable.h"
 #include "util/legoeventqueue.h"
 
 class GolBoundedEntity;
@@ -85,7 +86,7 @@ private:
 	LegoU32 m_billboardMaterialIndex;           // 0x0e0
 	RaceDecalManager::Trail::Decal m_scarDecal; // 0x0e4
 	GolCollidableEntity* m_collidable;          // 0x200
-	MaterialTable m_materialTable;              // 0x204
+	ManagedMaterialTable m_materialTable;       // 0x204
 	GolMaterial* m_flashMaterial;               // 0x210
 	GolMaterial* m_scarMaterial;                // 0x214
 	LegoEventQueue* m_eventQueue;               // 0x218

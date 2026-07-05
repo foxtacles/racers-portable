@@ -6,15 +6,6 @@ DECOMP_SIZE_ASSERT(GolWorldEntity, 0x28)
 DECOMP_SIZE_ASSERT(GolWorldEntity::ViewResult, 0x08)
 
 // TODO: Might need to be on GolOrientedEntity?
-// FUNCTION: GOLDP 0x10026fa0 FOLDED
-// FUNCTION: LEGORACERS 0x00410f10
-void GolWorldEntity::SetBoundsRadius(LegoFloat p_scalar)
-{
-	m_radius = p_scalar;
-	m_minX = m_center.m_x - p_scalar;
-	m_maxX = p_scalar + m_center.m_x;
-}
-
 // FUNCTION: GOLDP 0x100284c0
 // FUNCTION: LEGORACERS 0x00411a40
 GolWorldEntity::GolWorldEntity()
@@ -237,13 +228,6 @@ void GolWorldEntity::CopyOrientation(GolMatrix3* p_dest) const
 void GolWorldEntity::ClearColorTransform()
 {
 	// empty
-}
-
-// FUNCTION: GOLDP 0x100016f0 FOLDED
-// FUNCTION: LEGORACERS 0x0044e7e0 FOLDED
-undefined4 GolWorldEntity::GetKind()
-{
-	return 0;
 }
 
 // FUNCTION: GOLDP 0x1002c010 FOLDED

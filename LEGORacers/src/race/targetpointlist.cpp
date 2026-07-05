@@ -96,8 +96,8 @@ void TgbTargetPointList::Load(const LegoChar* p_name, LegoBool32 p_binary, LegoB
 		position.m_z = 0.0f;
 		LegoS32 index = -1;
 
-		GolFileParser::ParserTokenType token = parser->GetNextToken();
-		while (token != GolFileParser::e_rightCurly) {
+		GolFileParser::ParserTokenType token;
+		while ((token = parser->GetNextToken()) != GolFileParser::e_rightCurly) {
 			switch (token) {
 			case TgbTxtParser::e_position:
 				position.m_x = parser->ReadFloat();
@@ -114,8 +114,6 @@ void TgbTargetPointList::Load(const LegoChar* p_name, LegoBool32 p_binary, LegoB
 				parser->HandleUnexpectedToken(GolFileParser::e_syntaxerror);
 				break;
 			}
-
-			token = parser->GetNextToken();
 		}
 
 		m_entries[i].Set(&position, index);
@@ -137,6 +135,27 @@ void TgbTargetPointList::Reset()
 	}
 
 	m_count = 0;
+}
+
+// FUNCTION: LEGORACERS 0x0045c660
+LegoU32 TargetPointList::DisableTargetPoints(undefined4 p_index)
+{
+	LegoU32 i = 0;
+	if (static_cast<LegoU32>(m_count) > 0) {
+		Entry* entry = m_entries;
+		while (i < static_cast<LegoU32>(m_count)) {
+			if (entry->m_index == p_index) {
+				if (entry->m_flags & TargetPointList::Entry::c_flagEnabled) {
+					entry->m_flags &= ~TargetPointList::Entry::c_flagEnabled;
+				}
+			}
+
+			i++;
+			entry++;
+		}
+	}
+
+	return m_count;
 }
 
 // FUNCTION: LEGORACERS 0x0045c6a0

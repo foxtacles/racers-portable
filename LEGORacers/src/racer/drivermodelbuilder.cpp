@@ -327,7 +327,7 @@ void DriverModelBuilder::CopyModelVertices(
 	p_destModel->AddFlagsWithBounds(0, FALSE);
 }
 
-// STUB: LEGORACERS 0x0049d880
+// FUNCTION: LEGORACERS 0x0049d880
 void DriverModelBuilder::CopyModelIndices(GolModelBase* p_sourceModel, GolModelBase* p_destModel, LegoU32 p_indexOffset)
 {
 	GdbModelIndexArrayBase* sourceIndexArrayBase;
@@ -504,7 +504,7 @@ void DriverModelBuilder::ApplyFaceExpression(GolModelBase* p_model, DriverCosmet
 	p_model->GetMaterialTable()->AssignEntryByName(materialIndex, materialName);
 }
 
-// STUB: LEGORACERS 0x0049dd50
+// FUNCTION: LEGORACERS 0x0049dd50
 void DriverModelBuilder::CopyGroupsUntilFace()
 {
 	GolName faceName;

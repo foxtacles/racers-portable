@@ -21,8 +21,6 @@ extern const LegoFloat g_unk0x004b02e0;
 
 extern const LegoFloat g_fadeAlphaScale;
 
-extern const LegoFloat g_emplacementGravityScale;
-
 // GLOBAL: LEGORACERS 0x004b19d4
 const LegoFloat g_turboSoundMinDistance = 30.0f;
 
@@ -40,6 +38,12 @@ const LegoFloat g_turboFadeAlphaScale = 0.0028571428f;
 
 // GLOBAL: LEGORACERS 0x004b1a58
 const LegoFloat g_turboEndVolumeBase = 0.6f;
+
+// FUNCTION: LEGORACERS 0x0044f580 FOLDED
+LegoS32 TurboAction::GetBrickColor()
+{
+	return PowerupAction::c_brickColorGreen;
+}
 
 // FUNCTION: LEGORACERS 0x0045c7e0
 TurboAction::TurboAction()
@@ -229,8 +233,7 @@ void TurboAction::StartBoost()
 
 	SoundVector position;
 	CarVisuals* racerField = &m_racer->m_visuals;
-	GolAnimatedEntity** racerEntity = &racerField->m_carEntity;
-	(*racerEntity)->GetPosition(&position);
+	racerField->m_carEntity->GetPosition(&position);
 
 	m_soundSource->PlaySpatialSoundById(
 		m_level + c_soundBoostBase,
@@ -300,7 +303,7 @@ void TurboAction::Update(LegoU32 p_elapsedMs)
 	}
 }
 
-// STUB: LEGORACERS 0x0045cf90
+// FUNCTION: LEGORACERS 0x0045cf90
 void TurboAction::AnchorToRacer()
 {
 	GolAnimatedEntity* racerEntity = m_racer->m_visuals.m_carEntity;
@@ -316,9 +319,9 @@ void TurboAction::AnchorToRacer()
 	position.m_x += right.m_x * g_turboPackOffset;
 	position.m_y += right.m_y * g_turboPackOffset;
 	position.m_z += right.m_z * g_turboPackOffset;
-	position.m_x += up.m_x * g_emplacementGravityScale;
-	position.m_y += up.m_y * g_emplacementGravityScale;
-	position.m_z += up.m_z * g_emplacementGravityScale;
+	position.m_x += up.m_x * 3.0f;
+	position.m_y += up.m_y * 3.0f;
+	position.m_z += up.m_z * 3.0f;
 
 	m_turboEntity->SetPosition(position);
 	m_turboEntity->SetDirectionUp(direction, up);

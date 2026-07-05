@@ -13,6 +13,9 @@ extern LegoFloat g_minSoundPan;
 // GLOBAL: LEGORACERS 0x004b0740
 extern const LegoFloat g_idleTurnRate = 2.5f;
 
+// GLOBAL: LEGORACERS 0x004b0758
+extern const LegoFloat g_unk0x004b0758 = 0.5f;
+
 // GLOBAL: LEGORACERS 0x004b0744
 extern const LegoFloat g_inputTurnRate = 1.25f;
 
@@ -76,7 +79,7 @@ void PlayerControls::Reset()
 	m_input.m_stateFlags = (m_input.m_stateFlags & ~2) | 1;
 }
 
-// STUB: LEGORACERS 0x00430120
+// FUNCTION: LEGORACERS 0x00430120
 void PlayerControls::UpdateSteering(LegoU32 p_elapsedMs)
 {
 	LegoFloat elapsedSeconds = static_cast<LegoFloat>(static_cast<LegoS32>(p_elapsedMs)) * 0.001f;
@@ -114,7 +117,7 @@ void PlayerControls::UpdateSteering(LegoU32 p_elapsedMs)
 				delta = turnRate;
 			}
 		}
-		else if (!(inputFlags & c_inputFlagSteerPositive) && (inputFlags & c_inputFlagSteerNegative)) {
+		else if ((inputFlags & c_inputFlagSteerNegative) && !(inputFlags & c_inputFlagSteerPositive)) {
 			if (m_input.m_steering > 0.0f) {
 				delta = -g_steeringReturnRate;
 			}
@@ -269,7 +272,7 @@ void PlayerControls::UpdateThrottle()
 	}
 
 	if (!(m_racer->m_flags & Racer::c_flagDrifting) && reverseValue < 0.0f && throttleValue > 0.0f) {
-		driveValue = 0.5f;
+		driveValue = g_unk0x004b0758;
 	}
 
 	if (!(m_input.m_stateFlags & c_stateControlMask)) {

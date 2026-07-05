@@ -36,26 +36,11 @@ DECOMP_SIZE_ASSERT(RaceActionSource, 0x24)
 
 DECOMP_SIZE_ASSERT(RaceEventTable, 0x90)
 
-// STUB: LEGORACERS 0x0045c660
-LegoU32 TargetPointList::DisableTargetPoints(undefined4 p_index)
-{
-	LegoU32 i = 0;
-	if (static_cast<LegoU32>(m_count) > 0) {
-		Entry* entry = m_entries;
-		while (i < static_cast<LegoU32>(m_count)) {
-			if (entry->m_index == p_index) {
-				if (entry->m_flags & TargetPointList::Entry::c_flagEnabled) {
-					entry->m_flags &= ~TargetPointList::Entry::c_flagEnabled;
-				}
-			}
+// GLOBAL: LEGORACERS 0x004b1b44
+static const LegoFloat g_defaultSoundMinDistance = 30.0f;
 
-			i++;
-			entry++;
-		}
-	}
-
-	return m_count;
-}
+// GLOBAL: LEGORACERS 0x004b1b48
+static const LegoFloat g_defaultSoundMaxDistance = 300.0f;
 
 // FUNCTION: LEGORACERS 0x0045ee50
 void RaceEventResource::OnEventStart(GolVec3* p_position)
@@ -254,8 +239,8 @@ void RaceEventTable::ParseSounds(GolFileParser* p_parser, LegoBool32 p_mirror)
 			p_parser->HandleUnexpectedToken(GolFileParser::e_leftCurly);
 		}
 
-		params.m_maxDistance = 300.0f;
-		params.m_minDistance = 30.0f;
+		params.m_minDistance = g_defaultSoundMinDistance;
+		params.m_maxDistance = g_defaultSoundMaxDistance;
 		params.m_soundId = 0;
 		params.m_looping = FALSE;
 		params.m_noEnd = FALSE;
@@ -1484,7 +1469,7 @@ void RaceEventTable::ParseExternalForces(GolFileParser* p_parser, LegoBool32 p_m
 	p_parser->ReadRightCurly();
 }
 
-// STUB: LEGORACERS 0x00461990
+// FUNCTION: LEGORACERS 0x00461990
 void RaceEventTable::ParseLapZones(GolFileParser* p_parser)
 {
 	RaceEventTable* field = this;
@@ -2252,6 +2237,7 @@ void RaceEventTable::FireEventsForRacer(undefined4 p_startId, undefined4 p_endId
 		m_hazardManager->DispatchEventPair(p_startId, p_endId, p_racer);
 	}
 }
+
 // FUNCTION: LEGORACERS 0x00462c60
 void RaceEventTable::ForceAllEvents()
 {

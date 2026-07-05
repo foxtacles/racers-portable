@@ -5,23 +5,47 @@
 
 DECOMP_SIZE_ASSERT(PowerupExplosion, 0x270)
 
+// GLOBAL: LEGORACERS 0x004b0134
+static const LegoFloat g_explosionMaxDistanceSq = 250000.0f;
+
+// GLOBAL: LEGORACERS 0x004b0138
+static const LegoFloat g_explosionScarDepth = 15.0f;
+
+// GLOBAL: LEGORACERS 0x004b013c
+static const LegoFloat g_explosionBaseRadius = 0.1f;
+
+// GLOBAL: LEGORACERS 0x004b0140
+static const LegoFloat g_explosionFlashBaseWidth = 0.1f;
+
+// GLOBAL: LEGORACERS 0x004b0144
+static const LegoFloat g_explosionFlashBaseHeight = 0.2f;
+
+// GLOBAL: LEGORACERS 0x004b0148
+static const LegoFloat g_explosionInitialModelScale = 0.050000001f;
+
+// GLOBAL: LEGORACERS 0x004b014c
+static const LegoFloat g_explosionInitialGrowth = 0.050000001f;
+
 // GLOBAL: LEGORACERS 0x004b0150
 LegoFloat g_explosionImpulseScale = 80.0f;
 
 // GLOBAL: LEGORACERS 0x004b0154
 LegoFloat g_explosionLaunchImpulse = 200.0f;
 
+// GLOBAL: LEGORACERS 0x004b0158
+static const LegoFloat g_explosionMaxAlpha = 255.0f;
+
 // GLOBAL: LEGORACERS 0x004b015c
 LegoFloat g_explosionScarAlpha = 180.0f;
 
-extern const LegoFloat g_violetShoalTwo;
-extern const LegoFloat g_unk0x004b0544;
-extern const LegoFloat g_homingProjectileCollisionStartOffset;
+// GLOBAL: LEGORACERS 0x004b0160
+static const LegoFloat g_explosionPositionLimit = 2048.0f;
+
+extern const LegoFloat g_two;
 
 // FUNCTION: LEGORACERS 0x004210b0
 PowerupExplosion::PowerupExplosion()
 {
-	m_materialTable.Reset();
 	m_state = c_stateUninitialized;
 	m_golExport = NULL;
 	m_billboard = NULL;
@@ -46,7 +70,7 @@ PowerupExplosion::PowerupExplosion()
 	m_next = NULL;
 	m_leavesScar = 0;
 	m_blastMode = 0;
-	m_growth = g_unk0x004b0544;
+	m_growth = g_explosionInitialGrowth;
 	m_growthRate = 0.0f;
 	m_initialGrowthRate = 0.0f;
 	m_growthAcceleration = 0.0f;
@@ -56,7 +80,6 @@ PowerupExplosion::PowerupExplosion()
 PowerupExplosion::~PowerupExplosion()
 {
 	Destroy();
-	m_materialTable.Destroy();
 }
 
 // FUNCTION: LEGORACERS 0x00421250
@@ -84,7 +107,7 @@ void PowerupExplosion::Initialize(const Params* p_params)
 
 	LegoFloat rate = 1.0f / (static_cast<LegoFloat>(static_cast<LegoS32>(m_flashDurationMs)) * 0.001f);
 	m_initialGrowthRate = rate + rate;
-	LegoFloat rateDelta = (1.0f - 0.050000001f) - m_initialGrowthRate;
+	LegoFloat rateDelta = (1.0f - g_explosionInitialGrowth) - m_initialGrowthRate;
 	m_growthAcceleration = (rateDelta + rateDelta) * (rate * rate);
 
 	LegoFloat endRate =
@@ -104,17 +127,22 @@ void PowerupExplosion::Initialize(const Params* p_params)
 		m_billboard->ConfigureFromMaterialTable(
 			m_manager->GetBillboardMaterialTable(),
 			m_billboardMaterialIndex,
-			0.1f,
-			0.2f,
-			250000.0f
+			g_explosionFlashBaseWidth,
+			g_explosionFlashBaseHeight,
+			g_explosionMaxDistanceSq
 		);
 	}
 	else if (m_billboard != NULL) {
-		m_billboard->Configure(p_params->m_billboardMaterial, 0.1f, 0.2f, 250000.0f);
+		m_billboard->Configure(
+			p_params->m_billboardMaterial,
+			g_explosionFlashBaseWidth,
+			g_explosionFlashBaseHeight,
+			g_explosionMaxDistanceSq
+		);
 	}
 
 	if (p_params->m_model != NULL) {
-		m_modelEntity.SetPrimaryModel(p_params->m_model->GetModel(0), 250000.0f);
+		m_modelEntity.SetPrimaryModel(p_params->m_model->GetModel(0), g_explosionMaxDistanceSq);
 		m_modelEntity.SetTextureScrollU(p_params->m_model->GetTextureScrollU());
 		m_modelEntity.SetTextureScrollV(p_params->m_model->GetTextureScrollV());
 		m_modelEntity.SetTextureScrollSpeedU(p_params->m_model->GetTextureScrollSpeedU());
@@ -146,12 +174,12 @@ void PowerupExplosion::Destroy()
 	m_state = c_stateUninitialized;
 }
 
-// STUB: LEGORACERS 0x00421520
+// FUNCTION: LEGORACERS 0x00421520
 void PowerupExplosion::Spawn(const GolVec3* p_position, undefined4 p_leavesScar, Racer* p_racer)
 {
-	LegoFloat negativeLimit = -2048.0f;
-	if (p_position->m_x > 2048.0f || p_position->m_x < negativeLimit || p_position->m_y > 2048.0f ||
-		p_position->m_y < negativeLimit || p_position->m_z > 2048.0f || p_position->m_z < negativeLimit) {
+	if (p_position->m_x > g_explosionPositionLimit || p_position->m_x < -g_explosionPositionLimit ||
+		p_position->m_y > g_explosionPositionLimit || p_position->m_y < -g_explosionPositionLimit ||
+		p_position->m_z > g_explosionPositionLimit || p_position->m_z < -g_explosionPositionLimit) {
 		m_state = c_stateIdle;
 		return;
 	}
@@ -159,30 +187,30 @@ void PowerupExplosion::Spawn(const GolVec3* p_position, undefined4 p_leavesScar,
 	m_state = c_stateExploding;
 	m_remainingMs = m_flashDurationMs;
 	m_leavesScar = p_leavesScar;
-	m_ownerRacer = p_racer;
-	m_alpha = 255.0f;
+	m_alpha = g_explosionMaxAlpha;
 	m_modelAlpha = 0.0f;
-	m_growth = 0.050000001f;
+	m_ownerRacer = p_racer;
+	m_growth = g_explosionInitialGrowth;
 	m_growthRate = m_initialGrowthRate;
 
 	m_worldEntity.SetPosition(*p_position);
-	m_worldEntity.SetBoundsRadius(0.1f);
+	m_worldEntity.SetBoundsRadius(g_explosionBaseRadius);
 
 	if (m_billboard != NULL) {
-		m_billboard->SetWidth(0.1f);
-		m_billboard->SetHeight(0.2f);
+		m_billboard->SetWidth(g_explosionFlashBaseWidth);
+		m_billboard->SetHeight(g_explosionFlashBaseHeight);
 		m_billboard->SetPosition(*p_position);
 	}
 
 	if (m_modelEntity.HasModel()) {
-		m_modelEntity.SetScaleThenInvalidateRadius(0.050000001f);
+		m_modelEntity.SetScaleThenInvalidateRadius(g_explosionInitialModelScale);
 		m_modelEntity.SetPosition(*p_position);
 	}
 
 	GolVec3 position;
 	position.m_x = p_position->m_x;
 	position.m_y = p_position->m_y;
-	position.m_z = p_position->m_z + g_homingProjectileCollisionStartOffset;
+	position.m_z = p_position->m_z + 5.0f;
 	m_scarDecal.m_center = position;
 
 	GolVec3 forward;
@@ -224,7 +252,7 @@ void PowerupExplosion::Spawn(const GolVec3* p_position, undefined4 p_leavesScar,
 		GolVec3 particlePosition;
 		particlePosition.m_x = position.m_x;
 		particlePosition.m_y = position.m_y;
-		particlePosition.m_z = position.m_z - g_homingProjectileCollisionStartOffset;
+		particlePosition.m_z = position.m_z - 5.0f;
 		m_particleAnimation->SpawnParticle("explode", &particlePosition, NULL, NULL);
 	}
 }
@@ -286,7 +314,8 @@ void PowerupExplosion::UpdateFlash(LegoU32 p_elapsedMs)
 				m_alpha = g_explosionScarAlpha;
 				m_scarDecal.m_width = width;
 				m_scarDecal.m_length = width2;
-				m_scarDecal.m_depth = 15.0f;
+				LegoFloat depth = g_explosionScarDepth;
+				m_scarDecal.m_depth = depth;
 				m_scarDecal.Project(m_collidable);
 			}
 			else {
@@ -303,24 +332,27 @@ void PowerupExplosion::UpdateFlash(LegoU32 p_elapsedMs)
 		m_growthRate = acceleration * elapsedSeconds + m_growthRate;
 		m_growth = elapsedSeconds * m_growthRate + m_growth;
 
-		LegoFloat radius = (m_blastRadius - 0.1f) * m_growth + 0.1f;
+		LegoFloat radius = (m_blastRadius - g_explosionBaseRadius) * m_growth + g_explosionBaseRadius;
 		m_worldEntity.SetBoundsRadius(radius);
 
-		LegoFloat width = (m_flashWidth - 0.1f) * m_growth + 0.1f;
+		LegoFloat width = (m_flashWidth - g_explosionFlashBaseWidth) * m_growth + g_explosionFlashBaseWidth;
 		if (m_scarMaterial != NULL && m_leavesScar != zero) {
 			m_materialTable.SetEntry(0, m_scarMaterial);
 			m_scarDecal.m_width = width;
 			m_scarDecal.m_length = width;
-			m_scarDecal.m_depth = 15.0f;
+			LegoFloat depth = g_explosionScarDepth;
+			m_scarDecal.m_depth = depth;
 			m_scarDecal.Project(m_collidable);
 		}
 
 		if (m_billboard != NULL) {
 			m_billboard->SetWidth(width);
-			m_billboard->SetHeight((m_flashHeight - 0.2f) * m_growth + 0.2f);
+			m_billboard->SetHeight(
+				(m_flashHeight - g_explosionFlashBaseHeight) * m_growth + g_explosionFlashBaseHeight
+			);
 		}
 
-		LegoFloat value = (m_modelScale - 0.050000001f) * m_growth + 0.050000001f;
+		LegoFloat value = (m_modelScale - g_explosionInitialModelScale) * m_growth + g_explosionInitialModelScale;
 		if (value > 1.0f) {
 			value = 1.0f;
 		}
@@ -329,15 +361,15 @@ void PowerupExplosion::UpdateFlash(LegoU32 p_elapsedMs)
 			m_modelEntity.SetScaleThenInvalidateRadius(value);
 		}
 
-		m_alpha = (g_violetShoalTwo - (m_growth + m_growth)) * 255.0f;
+		m_alpha = (g_two - (m_growth + m_growth)) * g_explosionMaxAlpha;
 		if (m_alpha < 0.0f) {
 			m_alpha = 0.0f;
 		}
-		else if (m_alpha > 255.0f) {
-			m_alpha = 255.0f;
+		else if (m_alpha > g_explosionMaxAlpha) {
+			m_alpha = g_explosionMaxAlpha;
 		}
 
-		m_modelAlpha = (1.0f - m_growth) * 255.0f;
+		m_modelAlpha = (1.0f - m_growth) * g_explosionMaxAlpha;
 		if (m_modelAlpha < 0.0f) {
 			m_modelAlpha = 0.0f;
 		}
@@ -387,7 +419,7 @@ void PowerupExplosion::DrawTransparent(GolD3DRenderDevice* p_renderer)
 	}
 }
 
-// STUB: LEGORACERS 0x00421c00
+// FUNCTION: LEGORACERS 0x00421c00
 void PowerupExplosion::OnEvent(LegoEventQueue::CallbackData* p_data)
 {
 	LegoU32 mode = m_blastMode;

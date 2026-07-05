@@ -13,7 +13,7 @@
 #include <math.h>
 #include <string.h>
 
-extern const LegoFloat g_violetShoalTwo;
+extern const LegoFloat g_two;
 extern const LegoFloat g_carBuildModelHeightScale;
 
 DECOMP_SIZE_ASSERT(CarModelScreenBase::CarPartPlacement, 0x2d0)
@@ -39,6 +39,9 @@ LegoFloat g_pieceCommitHeight = 1.0f;
 
 // GLOBAL: LEGORACERS 0x004c7668
 LegoFloat g_viewAngleStep = g_twoPiPlacement * 0.125f;
+
+// GLOBAL: LEGORACERS 0x004b02f0
+extern const LegoFloat g_selectedPulseAmplitude = -64.0f;
 
 // GLOBAL: LEGORACERS 0x004b02f4
 extern const LegoFloat g_negativeRadiansToTableIndex = -162.97466f;
@@ -664,7 +667,7 @@ LegoBool32 CarModelScreenBase::CarPartPlacement::PitchViewAnalog(LegoFloat p_del
 	}
 
 	if (p_delta > 0.0f) {
-		if (m_viewPitch >= g_violetShoalTwo) {
+		if (m_viewPitch >= g_two) {
 			return FALSE;
 		}
 	}
@@ -676,7 +679,7 @@ LegoBool32 CarModelScreenBase::CarPartPlacement::PitchViewAnalog(LegoFloat p_del
 	if (m_viewPitch < 0.0f) {
 		m_viewPitch = 0.0f;
 	}
-	else if (m_viewPitch > g_violetShoalTwo) {
+	else if (m_viewPitch > g_two) {
 		m_viewPitch = 2.0f;
 	}
 
@@ -977,15 +980,15 @@ LegoBool32 CarModelScreenBase::CarPartPlacement::Draw()
 		LegoU32 alpha;
 		if (m_pieceAnimPhase & c_placementFeedbackMask) {
 			alpha = 0x96;
-			LegoFloat value = m_pieceHeight - m_pieceRestHeight - 1.2f;
+			LegoFloat value = m_pieceHeight - m_pieceRestHeight - g_carPartHoverHeight;
 
-			if (value < 1.2f && m_pitchTarget != 2) {
+			if (value < g_carPartHoverHeight && m_pitchTarget != 2) {
 				if (value < 0.0f) {
 					alpha = 0;
 				}
 				else {
 					LegoFloat alphaValue = value;
-					alphaValue /= 1.2f;
+					alphaValue /= g_carPartHoverHeight;
 					alphaValue *= 150.0f;
 					alpha = static_cast<LegoU32>(alphaValue);
 				}

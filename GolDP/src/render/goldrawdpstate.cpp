@@ -105,7 +105,7 @@ LegoS32 GolDrawDPState::CreateDevice()
 		m_flags |= c_flagBit11 | c_flagBit13;
 	}
 	else {
-		m_flags &= ~c_flagBit19;
+		m_flags &= ~c_flagSystemMemorySurfaces;
 	}
 
 	if ((m_flags & c_flagForceSoftware) && (m_flags & c_flagTexturePalettes)) {
@@ -323,12 +323,6 @@ LegoBool32 GolDrawDPState::SupportsAdditiveBlend() const
 	}
 }
 
-// FUNCTION: GOLDP 0x100016f0 FOLDED
-undefined4 GolDrawDPState::SupportsWBuffer()
-{
-	return FALSE;
-}
-
 // FUNCTION: GOLDP 0x10001700
 LegoBool32 GolDrawDPState::SupportsPaletteAlpha() const
 {
@@ -443,7 +437,7 @@ void GolDrawDPState::SelectDevice(const char* p_driverName, const char* p_device
 	}
 
 	if (p_driverName == NULL || p_deviceName == NULL) {
-		m_flags &= ~c_flagBit14;
+		m_flags &= ~c_flagDeviceSelected;
 		return;
 	}
 
@@ -462,7 +456,7 @@ void GolDrawDPState::SelectDevice(const char* p_driverName, const char* p_device
 		GOL_FATALERROR(c_golErrorOutOfMemory);
 	}
 	::memcpy(m_deviceName, p_deviceName, len);
-	m_flags |= c_flagBit14;
+	m_flags |= c_flagDeviceSelected;
 }
 
 // FUNCTION: GOLDP 0x10001a00

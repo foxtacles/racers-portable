@@ -12,6 +12,18 @@
 DECOMP_SIZE_ASSERT(RaceCameraController, 0x150)
 DECOMP_SIZE_ASSERT(RaceCameraController::Profile, 0x18)
 
+// GLOBAL: LEGORACERS 0x004b0314
+extern const LegoFloat g_shakeFovMax = 80.0f;
+
+// GLOBAL: LEGORACERS 0x004b0318
+extern const LegoFloat g_shakeFovMin = 40.0f;
+
+// GLOBAL: LEGORACERS 0x004b031c
+extern const LegoFloat g_unk0x004b031c = 0.02f;
+
+// GLOBAL: LEGORACERS 0x004b0320
+extern const LegoFloat g_unk0x004b0320 = 0.1f;
+
 // GLOBAL: LEGORACERS 0x004b0328
 const RaceCameraController::Profile g_cameraProfiles[8] = {
 	{1, 5.0f, 35.0f, 20.0f, 0.1f, 0.25f},
@@ -29,6 +41,30 @@ extern const LegoFloat g_lagTimeScale = 250.0f;
 
 // GLOBAL: LEGORACERS 0x004b03ec
 extern const LegoFloat g_degreesToRadians = 0.017453292f;
+
+// GLOBAL: LEGORACERS 0x004b03f8
+extern const LegoFloat g_transitionTurnRate = 0.0015707964f;
+
+// GLOBAL: LEGORACERS 0x004b03fc
+extern const LegoFloat g_cameraMinDistance = 12.0f;
+
+// GLOBAL: LEGORACERS 0x004b0408
+extern const LegoFloat g_unk0x004b0408 = -3.1415927f;
+
+// GLOBAL: LEGORACERS 0x004b040c
+extern const LegoFloat g_viewAngleDeadband = 0.014f;
+
+// GLOBAL: LEGORACERS 0x004b0410
+extern const LegoFloat g_unk0x004b0410 = -0.014f;
+
+// GLOBAL: LEGORACERS 0x004b0418
+extern const LegoFloat g_unk0x004b0418 = -0.30000001f;
+
+// GLOBAL: LEGORACERS 0x004b041c
+extern const LegoFloat g_turnLookAheadScale = 80.0f;
+
+// GLOBAL: LEGORACERS 0x004b0420
+extern const LegoFloat g_transitionProgressScale = 0.00050000002f;
 
 // FUNCTION: LEGORACERS 0x00427b70
 void RaceCameraController::SetPositionLag(LegoFloat p_amount)
@@ -54,7 +90,7 @@ void RaceCameraController::SetHeightAngle(LegoFloat p_degrees)
 	m_heightSine = static_cast<LegoFloat>(sin(g_degreesToRadians * p_degrees));
 }
 
-// STUB: LEGORACERS 0x00427c00
+// FUNCTION: LEGORACERS 0x00427c00
 void RaceCameraController::UpdateListener()
 {
 	if (m_listenerNode == NULL || m_racer == NULL) {
@@ -105,7 +141,7 @@ void RaceCameraController::UpdateListener()
 	}
 }
 
-// STUB: LEGORACERS 0x00427d30
+// FUNCTION: LEGORACERS 0x00427d30
 void RaceCameraController::UpdateFollow()
 {
 	GolCamera* camera = m_camera;
@@ -130,7 +166,7 @@ void RaceCameraController::UpdateFollow()
 		right.m_z = m_smoothedTransform.m_orientation.m_rows[2].m_z;
 		forward.m_z = m_smoothedTransform.m_orientation.m_rows[1].m_z;
 
-		camera->GetTransform()->VTable0x24(&right, &forward);
+		camera->GetTransform()->SetDirectionUp(&right, &forward);
 		camera->m_flags |= GolCamera::c_flagViewDirty;
 		return;
 	}
@@ -145,13 +181,13 @@ void RaceCameraController::UpdateFollow()
 		right.m_z = -m_smoothedTransform.m_orientation.m_rows[2].m_z;
 		forward.m_z = m_smoothedTransform.m_orientation.m_rows[1].m_z;
 
-		camera->GetTransform()->VTable0x24(&right, &forward);
+		camera->GetTransform()->SetDirectionUp(&right, &forward);
 		camera->m_flags |= GolCamera::c_flagViewDirty;
 		return;
 	}
 	camera->GetTransform()->SetPosition(&m_smoothedTransform.m_position);
 	camera->m_flags |= GolCamera::c_flagViewDirty;
-	camera->GetTransform()->VTable0x24(
+	camera->GetTransform()->SetDirectionUp(
 		&m_smoothedTransform.m_orientation.m_rows[2],
 		&m_smoothedTransform.m_orientation.m_rows[1]
 	);
@@ -162,6 +198,12 @@ extern LegoU16 g_randomTable[1024];
 extern LegoU32 g_randomTableIndex;
 extern const LegoFloat g_halfPi;
 extern const LegoFloat g_hazardPi;
+extern const LegoFloat g_statMax;
+extern const LegoFloat g_hazardPi;
+extern const LegoFloat g_twoPi;
+extern const LegoFloat g_brickSettleRate;
+extern const LegoFloat g_unk0x004afde0;
+extern const LegoFloat g_warpPortalHeightOffset;
 
 // FUNCTION: LEGORACERS 0x00427e80
 void RaceCameraController::UpdateShake()
@@ -182,12 +224,12 @@ void RaceCameraController::UpdateShake()
 		m_baseFov = m_camera->m_fov;
 
 		if (m_racer->m_flags & 0x800) {
-			if ((m_shakeAmount > 0.0f || m_baseFov <= 40.0f) && m_baseFov < 80.0f) {
+			if ((m_shakeAmount > 0.0f || m_baseFov <= g_shakeFovMin) && m_baseFov < g_shakeFovMax) {
 				g_randomTableIndex = (g_randomTableIndex + 1) & 0x3ff;
 				m_shakeAmount =
 					-(static_cast<LegoFloat>(
 						  static_cast<LegoU16>(g_randomTable[g_randomTableIndex]) %
-						  static_cast<LegoS32>(80.0f - m_baseFov)
+						  static_cast<LegoS32>(g_shakeFovMax - m_baseFov)
 					  ) *
 					  0.5f);
 			}
@@ -195,7 +237,7 @@ void RaceCameraController::UpdateShake()
 				g_randomTableIndex = (g_randomTableIndex + 1) & 0x3ff;
 				m_shakeAmount = static_cast<LegoFloat>(
 									static_cast<LegoU16>(g_randomTable[g_randomTableIndex]) %
-									static_cast<LegoS32>(m_baseFov - 40.0f)
+									static_cast<LegoS32>(m_baseFov - g_shakeFovMin)
 								) *
 								0.5f;
 			}
@@ -216,8 +258,8 @@ void RaceCameraController::UpdateShake()
 		GolCamera* camera = m_camera;
 		remaining -= m_shakeMs;
 		LegoFloat phase = static_cast<LegoFloat>(remaining);
-		phase *= 0.02f;
-		phase *= 0.1f;
+		phase *= g_unk0x004b031c;
+		phase *= g_unk0x004b0320;
 		phase *= g_hazardPi;
 		LegoFloat angle = static_cast<LegoFloat>(cos(phase));
 		LegoFloat fov = angle * m_shakeAmount + (m_baseFov - m_shakeAmount);
@@ -402,7 +444,7 @@ void RaceCameraController::SetView(LegoS32 p_viewIndex, LegoBool32 p_alternate)
 	m_lookBack = FALSE;
 }
 
-// STUB: LEGORACERS 0x00428500
+// FUNCTION: LEGORACERS 0x00428500
 GolVec3* RaceCameraController::GetViewDirection(GolVec3* p_dest)
 {
 	if (m_mode == c_modeFinish) {
@@ -420,7 +462,7 @@ GolVec3* RaceCameraController::GetViewDirection(GolVec3* p_dest)
 	return p_dest;
 }
 
-// STUB: LEGORACERS 0x00428540
+// FUNCTION: LEGORACERS 0x00428540
 void RaceCameraController::Update(LegoFloat p_elapsedMs)
 {
 	if (m_racer == NULL) {
@@ -442,11 +484,11 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 
 	m_frameDirty = m_dirty;
 	m_dirty &= 0xf0;
-	if (p_elapsedMs <= 100.0f) {
+	if (p_elapsedMs <= g_statMax) {
 		m_elapsed = p_elapsedMs;
 	}
 	else {
-		m_elapsed = 100.0f;
+		m_elapsed = g_statMax;
 	}
 
 	m_elapsedMs = static_cast<LegoS32>(m_elapsed);
@@ -469,7 +511,7 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 		m_transitionMs += m_elapsed;
 		LegoFloat amount;
 		if (m_transitionMs <= 2000.0f) {
-			amount = m_transitionMs * 0.00050000002f;
+			amount = m_transitionMs * g_transitionProgressScale;
 		}
 		else {
 			m_transitionMs = 2000.0f;
@@ -540,12 +582,12 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 					turnAmount = 0.0f;
 				}
 				else {
-					turnAmount = racer->m_physics.m_forwardSpeed * 80.0f / racer->m_physics.m_turnRadius;
-					if (turnAmount < -0.30000001f) {
-						turnAmount = -0.30000001f;
+					turnAmount = racer->m_physics.m_forwardSpeed * g_turnLookAheadScale / racer->m_physics.m_turnRadius;
+					if (turnAmount < g_unk0x004b0418) {
+						turnAmount = g_unk0x004b0418;
 					}
-					else if (turnAmount > 0.30000001f) {
-						turnAmount = 0.30000001f;
+					else if (turnAmount > -g_unk0x004b0418) {
+						turnAmount = -g_unk0x004b0418;
 					}
 				}
 
@@ -563,12 +605,12 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 				LegoFloat currentAngle = VectorToAngle(m_viewDirection.m_x, m_viewDirection.m_y);
 				LegoFloat desiredAngle = VectorToAngle(desiredDirection.m_x, desiredDirection.m_y);
 				LegoFloat delta = currentAngle - desiredAngle;
-				if (delta < -0.014f || delta > 0.014f) {
-					while (delta < -3.1415927f) {
-						delta += 6.2831855f;
+				if (delta < g_unk0x004b0410 || delta > g_viewAngleDeadband) {
+					while (delta < g_unk0x004b0408) {
+						delta += g_twoPi;
 					}
-					while (delta > 3.1415927f) {
-						delta -= 6.2831855f;
+					while (delta > -g_unk0x004b0408) {
+						delta -= g_twoPi;
 					}
 
 					LegoFloat angleAmount = 1.0f / (m_viewAngleRate * m_elapsed + 1.0f);
@@ -619,7 +661,7 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 				transitionStep = m_elapsed * 0.0040000002f;
 			}
 			else {
-				transitionStep = m_elapsed * 0.0020000001f;
+				transitionStep = m_elapsed * g_brickSettleRate;
 			}
 			m_followDistanceScale += transitionStep;
 
@@ -628,8 +670,8 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 				if (m_followDistanceScale < 0.0f) {
 					cameraDistance = -cameraDistance;
 				}
-				if (cameraDistance < 12.0f) {
-					cameraDistance = 12.0f;
+				if (cameraDistance < g_cameraMinDistance) {
+					cameraDistance = g_cameraMinDistance;
 				}
 			}
 			else {
@@ -661,7 +703,7 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 		if (m_mode == c_modeFinish) {
 			m_transitionMs += m_elapsed;
 			if (m_transitionMs <= 2000.0f) {
-				LegoFloat profileAmount = 1.0f - m_transitionMs * 0.00050000002f;
+				LegoFloat profileAmount = 1.0f - m_transitionMs * g_transitionProgressScale;
 				cameraDistance = m_blendFollowDistance * profileAmount + m_followDistance;
 				height = m_blendPitchSine * profileAmount + m_pitchSine;
 				verticalOffset = m_blendHeightSine * profileAmount + m_heightSine;
@@ -669,7 +711,7 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 
 				LegoFloat turnSin;
 				LegoFloat turnCos;
-				GolMath::SinCos(m_transitionMs * 0.0015707964f, &turnSin, &turnCos);
+				GolMath::SinCos(m_transitionMs * g_transitionTurnRate, &turnSin, &turnCos);
 				cameraOffset.m_x = (m_viewDirection.m_x * turnCos - m_viewDirection.m_y * turnSin) * sideDistance;
 				cameraOffset.m_y = (m_viewDirection.m_x * turnSin + m_viewDirection.m_y * turnCos) * sideDistance;
 			}
@@ -722,12 +764,12 @@ void RaceCameraController::Update(LegoFloat p_elapsedMs)
 
 		entity->GetPosition(&m_rawTransform.m_position);
 		if (m_alternate) {
-			m_rawTransform.m_position.m_z += 6.0f;
-		}
-		else {
-			m_rawTransform.m_position.m_z += 10.0f;
+			m_rawTransform.m_position.m_z += g_warpPortalHeightOffset;
+			ApplySmoothing();
+			return;
 		}
 
+		m_rawTransform.m_position.m_z += g_unk0x004afde0;
 		ApplySmoothing();
 		return;
 	}

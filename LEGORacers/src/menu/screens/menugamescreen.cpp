@@ -39,18 +39,6 @@ void MenuGameScreen::VTable0x94(undefined4)
 {
 }
 
-// FUNCTION: LEGORACERS 0x00474bf0 FOLDED
-MenuStyleTable* MenuGameScreen::GetMenuStyles()
-{
-	return &m_sharedStyles;
-}
-
-// FUNCTION: LEGORACERS 0x00474c00
-MenuInputBindingTable* MenuGameScreen::GetMenuInputBindings()
-{
-	return &m_buttonBindings;
-}
-
 // FUNCTION: LEGORACERS 0x0047fae0
 MenuGameScreen::MenuGameScreen()
 {
@@ -348,17 +336,6 @@ void MenuGameScreen::ClearCosmeticTable()
 	cosmeticTable->Clear();
 }
 
-// TODO: Temporary workaround until we figure out how the original code was written.
-// The pragma code_seg prevents this trivial body from folding with identical functions elsewhere.
-
-// FUNCTION: LEGORACERS 0x004803c0
-#pragma code_seg(".text$menugamescreen_vt6c")
-LegoFloat MenuGameScreen::GetAspectScale()
-{
-	return 1.0f;
-}
-#pragma code_seg()
-
 // FUNCTION: LEGORACERS 0x004803d0
 void MenuGameScreen::ReinitializeInputBindings()
 {
@@ -441,10 +418,4 @@ LegoBool32 MenuGameScreen::Update(undefined4)
 	}
 
 	return FALSE;
-}
-
-// FUNCTION: LEGORACERS 0x00487d30
-void MenuGameScreen::OnIconDeselected(MenuIcon*)
-{
-	m_selectedIcon = NULL;
 }

@@ -15,6 +15,7 @@
 #include <string.h>
 
 extern const LegoFloat g_carBuildModelHeightScale;
+extern LegoFloat g_minSoundPan;
 extern const LegoFloat g_carBuildModelTextureCoordinateScale;
 extern const LegoFloat g_surfaceSoundMaxDistance;
 extern const LegoFloat g_surfaceSoundMinDistance;
@@ -81,6 +82,9 @@ extern const LegoFloat g_surfaceSoundPitchSpeed = 0.22f;
 // GLOBAL: LEGORACERS 0x004b047c
 extern const LegoFloat g_surfaceSoundFadeInMs = 280.0f;
 
+// GLOBAL: LEGORACERS 0x004b0480
+extern const LegoFloat g_unk0x004b0480 = 0.78539819f;
+
 // GLOBAL: LEGORACERS 0x004b0484
 extern const LegoFloat g_routePushImpulseMax = 300.0f;
 
@@ -116,6 +120,9 @@ extern const LegoFloat g_routeSlideLiftRate = 3.0f;
 
 // GLOBAL: LEGORACERS 0x004b04b0
 extern const LegoFloat g_slideLiftReleaseRate = 15.0f;
+
+// GLOBAL: LEGORACERS 0x004b04b4
+extern const LegoFloat g_directionalImpulseMax = 240.0f;
 
 // GLOBAL: LEGORACERS 0x004b04b8
 extern const LegoFloat g_routePlaybackDecel = 0.0020000001f;
@@ -442,10 +449,10 @@ void RacerPhysics::ApplyDirectionalImpulse(GolVec3* p_direction, LegoFloat p_mag
 		p_magnitude = -p_magnitude;
 	}
 
-	if (p_magnitude > g_routePushImpulseMax) {
-		p_magnitude = g_routePushImpulseMax;
+	if (p_magnitude > g_directionalImpulseMax) {
+		p_magnitude = g_directionalImpulseMax;
 	}
-	LegoFloat scaled = p_magnitude / g_routePushImpulseMax;
+	LegoFloat scaled = p_magnitude / g_directionalImpulseMax;
 
 	if (dot >= 0.0f) {
 		LegoFloat amount = (1.0f - dot) * g_unk0x004b0544;
@@ -881,11 +888,11 @@ void RacerPhysics::UpdateRouteSlideBank()
 	if (dot > 1.0f) {
 		dot = 1.0f;
 	}
-	else if (dot < -1.0f) {
-		dot = -1.0f;
+	else if (dot < g_minSoundPan) {
+		dot = g_minSoundPan;
 	}
 
-	m_slideBankTarget = 0.78539819f * dot;
+	m_slideBankTarget = g_unk0x004b0480 * dot;
 }
 
 // FUNCTION: LEGORACERS 0x0042a220
@@ -902,7 +909,7 @@ void RacerPhysics::SaveRouteState()
 	m_savedRouteSpinAngle = m_routeSpinAngle;
 }
 
-// STUB: LEGORACERS 0x0042a290
+// FUNCTION: LEGORACERS 0x0042a290
 void RacerPhysics::UpdateRouteRotation(LegoU32 p_elapsedMs)
 {
 	GolQuat rotation = m_routeCursor.m_rotation;
@@ -1400,7 +1407,7 @@ LegoBool32 RacerPhysics::CanSteer(LegoFloat p_turnRadius)
 	return TRUE;
 }
 
-// STUB: LEGORACERS 0x0042af90 FOLDED
+// FUNCTION: LEGORACERS 0x0042af90 FOLDED
 SpatialSoundInstance* RacerPhysics::PlaySurfaceSound(LegoS32 p_soundId)
 {
 	if (m_surfaceSound != NULL) {

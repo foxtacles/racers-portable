@@ -85,19 +85,6 @@ void GolModel::Allocate(
 	m_dirty = 1;
 }
 
-// FUNCTION: GOLDP 0x10006a60
-void GolModel::Destroy()
-{
-	if (m_modelVertexArray != NULL) {
-		m_modelVertexArray->Destroy();
-		delete m_modelVertexArray;
-		m_modelVertexArray = NULL;
-		m_vertexArray = 0;
-	}
-
-	GolModelBase::Destroy();
-}
-
 // FUNCTION: GOLDP 0x10006aa0
 void GolModel::ParseUncoloredVertices(GolFileParser& p_parser)
 {
@@ -146,7 +133,7 @@ void GolModel::ParseNormalVertices(GolFileParser& p_parser)
 	m_modelVertexArray->Parse(p_parser);
 }
 
-// STUB: GOLDP 0x10006c50
+// FUNCTION: GOLDP 0x10006c50
 void GolModel::Draw(GolD3DRenderDevice* p_renderer, MaterialTable* p_materialTable)
 {
 	if (p_materialTable == NULL) {
@@ -240,7 +227,7 @@ void GolModel::Draw(GolD3DRenderDevice* p_renderer, MaterialTable* p_materialTab
 	}
 }
 
-// STUB: GOLDP 0x10006e00
+// FUNCTION: GOLDP 0x10006e00
 void GolModel::DrawNode(
 	GolD3DRenderDevice* p_renderer,
 	MaterialTable* p_materialTable,

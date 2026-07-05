@@ -272,7 +272,7 @@ void GolBoundingShape::MirrorY()
 	}
 }
 
-// STUB: GOLDP 0x1001b2c0
+// FUNCTION: GOLDP 0x1001b2c0
 void GolBoundingShape::CollectVisibleLeaves(
 	const GolViewFrustum* p_frustum,
 	TreeNode::Node** p_first,
@@ -418,7 +418,7 @@ void GolBoundingShape::CollectVisibleLeaves(
 	*p_last = &lastEntry->m_data.m_node;
 }
 
-// STUB: GOLDP 0x1001b640
+// FUNCTION: GOLDP 0x1001b640
 void GolBoundingShape::CollectLeavesFromPvs(
 	const GolViewFrustum* p_frustum,
 	TreeNode* p_entry,

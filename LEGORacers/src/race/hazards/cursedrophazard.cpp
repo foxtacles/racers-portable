@@ -13,6 +13,7 @@ DECOMP_SIZE_ASSERT(CurseDropHazard, 0x18)
 extern LegoU16 g_randomTable[1024];
 extern LegoU32 g_randomTableIndex;
 
+// GLOBAL: LEGORACERS 0x004b4230
 static const GolVec3 g_curseDropActionDirection = {1.0f, 0.0f, 0.0f};
 
 static const GolVec3 g_curseDropActionPositions[] = {
@@ -21,7 +22,6 @@ static const GolVec3 g_curseDropActionPositions[] = {
 	{-362.258179f, 397.303925f, -94.959518f},
 };
 
-#pragma code_seg(".text$hazard_masked_update")
 // FUNCTION: LEGORACERS 0x0048b060 FOLDED
 void CurseDropHazard::Update(undefined4 p_elapsedMs)
 {
@@ -29,7 +29,6 @@ void CurseDropHazard::Update(undefined4 p_elapsedMs)
 		Hazard::Update(p_elapsedMs);
 	}
 }
-#pragma code_seg()
 
 // FUNCTION: LEGORACERS 0x0048b2f0
 CurseDropHazard::CurseDropHazard()
@@ -77,6 +76,7 @@ void CurseDropHazard::OnActivate(void*)
 	m_state = c_stateActive;
 }
 
+// FUNCTION: LEGORACERS 0x0048af50 FOLDED
 LegoS32 CurseDropHazard::Reset()
 {
 	OnDeactivate(NULL);

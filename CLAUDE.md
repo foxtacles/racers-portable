@@ -264,7 +264,7 @@ Small inline-defined class methods are a matching tool of their own — expansio
 - **Fused memset across adjacent members of different types.** One contiguous zero-store spanning two members won't come from two `memset` calls — use one call sized `sizeof(first) + sizeof(second)` with a short comment, or nest the members in a struct.
 - **`ZeroMemory` can beat aggregate init for Win32/DirectX structs.** `Type s; ZeroMemory(&s, sizeof(s)); s.dwSize = ...;` can match stack-store order that `{0}` and field-by-field zeroing miss.
 - **Small fixed-size `memcmp` inlines** into pointer loads + scalar compares; a hand-cast `*(LegoU32*)a != *(LegoU32*)b` compiles to direct global memory operands instead and misses. Don't widen an existing global buffer for scratch space — its declared size perturbs register allocation in other users.
-- **Preventing unwanted ICF with `#pragma code_seg` (temporary hack).** Symptom: reccmp "Failed to find function symbol" + a derived vtable slot pointing at a fold survivor. Wrap the function in a uniquely-named section (`#pragma code_seg(".text$unique_suffix")` ... `#pragma code_seg()`) with a `// TODO:` note. Do NOT use for functions the original itself folds — those stay `FOLDED`.
+- **ICF folds in two pools: in-class (inline) vs out-of-line — never across.** link 6.00.8168 folds byte-identical COMDATs only within the same kind: methods defined in the class body (SELECT_ANY) fold with each other, out-of-line /Gy functions fold with each other; identical bytes never fold across that boundary. This is why the original keeps the same trivial body at two addresses (e.g. `xor eax,eax; ret 0xc` at 0x466090 and 0x473490). When reccmp shows a GONE fold twin or a vtable slot pointing at a wrong fold survivor, the function is on the wrong SIDE: move its definition in-class (or out-of-line) to match the original pool. Deciding the side: an `e8` direct call to a pool address proves that pool out-of-line (calls to in-class trivial bodies inline away under /Ob1); an inline-pool survivor sits at its first INCLUDER's contribution tail, an out-of-line survivor inside its own TU's range. Never use `#pragma code_seg` section splitting for this. A non-trivial in-class body can still be legitimately e8-called when the caller's size makes /Ob1 decline the inline (GolCameraBase::Dot2) — if our draft caller inlines it instead, the symbol vanishes: keep the in-class form and demote its annotation to `// STUB:` until the caller matches.
 
 ## COMDAT Folding Across Targets
 
@@ -296,6 +296,28 @@ Current pattern:
 - `GOLDP_INLINE_EXPANSION_SOURCES` is a small evidence-driven list of GOLDP-only source units compiled with `/Ob2`. Treat it as a placeholder for a possible original static library or project grouping; this is not proven yet. Keep the list narrow, and do not broaden `/Ob2` to the full `goldp` target — that changes unrelated GOLDP codegen.
 
 Do not steer common-code matches by duplicating implementations, moving selected functions into headers, adding `.inl.h` files, or using `#pragma inline_depth`. If a common function differs between GOLDP and LEGORACERS because of inlining, first verify whether it belongs to this target-level common-source pattern.
+
+## Float Constants: Literals vs Named Globals
+
+Proven by experiment (cl 12.00.8168 `/O2`) and by census of the original binaries.
+
+**Compiler behavior.**
+
+- **Literals** are per-value COMDATs: deduped within a TU and merged across TUs by the linker — one address per value per binary. Codegen: pure FPU uses keep the constant as the *memory operand* (`fld arg; fmul [pool]`); stores are immediate (`mov [dst], 0x3f000000`); args are immediate (`push 0x3f000000`); constant expressions fold (`x = 0.5f; x = -x` compiles to a pooled `-0.5`).
+- **Named const globals** (`static const` and `extern const` behave identically): never fold, never merge, live in `.rdata`. `fmul`/`fadd` load the constant FIRST (`fld [g]; fmul arg`); stores/pushes go through a register (`mov eax, [g]; push eax`); negation emits `fld [g]; fchs`.
+- **Writable `.data` floats** are named non-const globals; codegen like named consts.
+
+**Classifying an original float datum** (what the 1999 source used):
+
+- References from multiple TUs, all in literal shape → the merged literal pool entry for that value. Source uses plain literals.
+- Any load+push, load+store, `fld`+`fchs`, const-first `fmul`/`fadd`, or a second same-value datum elsewhere → a NAMED constant of the owning TU (`static const LegoFloat` at file scope; `extern const` only if other TUs reference the same address). Multiple named constants may hold the same value — even within one TU.
+- Only `fcom`/`fld`-shaped single-TU references → ambiguous; prefer the literal unless a match proves otherwise.
+- **`x += c` is a shape oracle:** `fld [x]; fadd [c]` (value-first) ⇒ literal; `fld [c]; fadd [x]` (const-first) ⇒ named. Same for commutative `fmul`: const as the memory operand ⇒ literal; const loaded first ⇒ named.
+- A single-TU-referenced datum can still be that value's literal pool if every other user of the value compiles to immediates (`mov [dst], imm32` stores never reference the pool) — check the shapes, not just the spread.
+
+**reccmp rules.** Operands compare by rendered entity name. Literal pool entries are auto-discovered on BOTH sides (FPU-referenced addresses in read-only sections) and render as the value (`0.5 (FLOAT)`), so literal↔literal matches with no configuration. `reccmp/lego-racers-floats.csv` seeds orig-side FLOAT entities where auto-discovery fails (non-FPU references such as double push-pairs; writable sections). A GLOBAL annotation and a floats-CSV row on the SAME address is always wrong — it renders `(DATA)` vs `(FLOAT)` and permanently mismatches every reference.
+
+**Policy.** Literal in source ⇔ CSV row (or auto-discovery), no annotation. Named constant in source ⇔ GLOBAL annotation, no CSV row, and the name used at every original reference site.
 
 ## Naming Members from Matched Code
 

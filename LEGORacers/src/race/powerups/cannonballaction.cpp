@@ -16,10 +16,6 @@
 #include <float.h>
 #include <math.h>
 
-const LegoFloat g_powerupHitSoundMaxDistance = 600.0f;
-
-const LegoFloat g_powerupHitSoundMinDistance = 200.0f;
-
 extern const LegoFloat g_unlimitedDrawDistance;
 
 // GLOBAL: LEGORACERS 0x004b1370
@@ -31,6 +27,12 @@ const LegoFloat g_powerupSoundMinDistance = 30.0f;
 // GLOBAL: LEGORACERS 0x004b1388
 const LegoFloat g_powerupSoundMaxDistance = 300.0f;
 
+// GLOBAL: LEGORACERS 0x004b138c
+const LegoFloat g_powerupHitSoundMinDistance = 200.0f;
+
+// GLOBAL: LEGORACERS 0x004b1390
+const LegoFloat g_powerupHitSoundMaxDistance = 600.0f;
+
 // GLOBAL: LEGORACERS 0x004b1394
 const LegoFloat g_cannonballGravity = -32.1759987f;
 
@@ -39,6 +41,9 @@ const LegoFloat g_cannonballSpeed = 180.0f;
 
 // GLOBAL: LEGORACERS 0x004b139c
 const LegoFloat g_cannonballDefaultRange = 500.0f;
+
+// GLOBAL: LEGORACERS 0x004b13a0
+const LegoFloat g_cannonballBillboardSize = 5.0f;
 
 // GLOBAL: LEGORACERS 0x004b13a4
 const LegoFloat g_cannonballTrailSize = 3.0f;
@@ -51,9 +56,6 @@ const LegoFloat g_cannonballLaunchHeight = 5.0f;
 
 // GLOBAL: LEGORACERS 0x004b13e4
 extern const LegoFloat g_scarNormalThreshold = 0.70709997f;
-
-// GLOBAL: LEGORACERS 0x004b13e8
-extern const LegoFloat g_emplacementGravityScale = 3.0f;
 
 // GLOBAL: LEGORACERS 0x004c1c4c
 ColorRGBA g_cannonballTrailColor = {0x32, 0x32, 0x32, 0xc8};
@@ -103,7 +105,7 @@ void CannonballAction::Destroy()
 }
 
 // FUNCTION: LEGORACERS 0x00451a50
-LegoU32 CannonballAction::Activate(ActionSetup* p_setup)
+void CannonballAction::Activate(ActionSetup* p_setup)
 {
 	m_state = c_stateArmed;
 	m_ownerRacer = p_setup->m_racer;
@@ -126,7 +128,7 @@ LegoU32 CannonballAction::Activate(ActionSetup* p_setup)
 		material = renderDevice->FindMaterialByName("cannon");
 	}
 
-	return m_billboard->Configure(material, 5.0f, 5.0f, g_unlimitedDrawDistance);
+	m_billboard->Configure(material, g_cannonballBillboardSize, g_cannonballBillboardSize, g_unlimitedDrawDistance);
 }
 
 // FUNCTION: LEGORACERS 0x00451ad0
@@ -155,7 +157,7 @@ void CannonballAction::Deactivate()
 	}
 }
 
-// STUB: LEGORACERS 0x00451b50
+// FUNCTION: LEGORACERS 0x00451b50
 void CannonballAction::Update(LegoU32 p_elapsedMs)
 {
 	GolVec2 perpendicular;
@@ -292,7 +294,7 @@ void CannonballAction::Draw(GolD3DRenderDevice* p_renderer)
 	}
 }
 
-// STUB: LEGORACERS 0x00451f50
+// FUNCTION: LEGORACERS 0x00451f50
 void CannonballAction::AdvanceState()
 {
 	switch (m_state) {
@@ -355,10 +357,13 @@ void CannonballAction::AdvanceState()
 		m_projectile.LaunchAtRacer(&projectileParams, m_ownerRacer, m_targetRacer, TRUE, FALSE);
 	}
 	else if (m_emplacement != NULL) {
+		target = m_emplacement->m_targetPosition;
 		projectileParams.m_lifetimeMs = m_emplacement->m_lifetimeMs;
 		m_billboard->SetPosition(m_emplacement->m_position);
-		projectileParams.m_gravity = g_cannonballGravity * g_emplacementGravityScale;
-		m_projectile.LaunchAtPosition(&projectileParams, &m_emplacement->m_targetPosition);
+		projectileParams.m_gravity = g_cannonballGravity * 3.0f;
+		projectileParams.m_launchHeight = 0.0f;
+		projectileParams.m_lifetimeMs = 5000;
+		m_projectile.LaunchAtPosition(&projectileParams, &target);
 	}
 	else {
 		if (m_targetPoint != NULL) {

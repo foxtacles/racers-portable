@@ -46,84 +46,6 @@ undefined4 MenuScreen::ShouldLoadResources()
 	return 1;
 }
 
-// Keep the empty menu callbacks in the original input-device empty-void fold group.
-#pragma code_seg(".text$fold_44f590")
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetCreated(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetDestroyed(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetMoved(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetResized(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnCarouselSettled(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetFocused(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetUnfocused(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconEnabled(MenuIcon*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconDisabled(MenuIcon*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconFocused(MenuIcon*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconUnfocused(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconSelected(MenuIcon*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnIconDeselected(MenuIcon*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnWidgetValueChanged(MenuWidget*)
-{
-}
-
-// FUNCTION: LEGORACERS 0x0044f590 FOLDED
-void MenuScreen::OnSelectorSettled(MenuWidget*)
-{
-}
-#pragma code_seg()
-
 // FUNCTION: LEGORACERS 0x0046b380
 MenuScreen::MenuScreen()
 {
@@ -392,7 +314,7 @@ void MenuScreen::ApplyIconDefaults(MenuIcon::CreateParams* p_createParams)
 	ApplyWidgetDefaults(p_createParams);
 }
 
-// STUB: LEGORACERS 0x0046bb90
+// FUNCTION: LEGORACERS 0x0046bb90
 void MenuScreen::ApplySelectorDefaults(
 	MenuSelectorBase::CreateParamsWithCarousel* p_createParams,
 	MenuStyleTable::SelectorStyle* p_styleEntry
@@ -875,16 +797,11 @@ MenuInputBindingTable* MenuScreen::GetMenuInputBindings()
 	return &m_bindingTable;
 }
 
-// TODO: Temporary workaround until we figure out how the original code was written.
-// The pragma code_seg prevents this trivial body from folding with identical functions elsewhere.
-
 // FUNCTION: LEGORACERS 0x0046c850
-#pragma code_seg(".text$menuscreen_vt6c")
 LegoFloat MenuScreen::GetAspectScale()
 {
 	return 1.0f;
 }
-#pragma code_seg()
 
 // FUNCTION: LEGORACERS 0x0046c860 FOLDED
 undefined4 MenuScreen::OnWidgetKeyUp(MenuWidget*, void*, undefined4, undefined4)

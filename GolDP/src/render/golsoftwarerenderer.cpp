@@ -27,7 +27,7 @@ static LegoS32 __fastcall BucketCommandArrayBySortByte0(
 	LegoS32 p_count
 );
 
-static LegoU8 __fastcall BucketCommandsBySortByte0(
+LegoU8 __fastcall BucketCommandsBySortByte0(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command
 );
@@ -56,8 +56,8 @@ static LegoU8 GetSoftwareTextureSizeCode(const MipmapLevel* p_level)
 	}
 }
 
-// STUB: GOLDP 0x10041000
-static LegoU8 __fastcall BucketCommandsBySortByte3(
+// FUNCTION: GOLDP 0x10041000
+LegoU8 __fastcall BucketCommandsBySortByte3(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command
 )
@@ -75,8 +75,8 @@ static LegoU8 __fastcall BucketCommandsBySortByte3(
 	return static_cast<LegoU8>(bucketIndex);
 }
 
-// STUB: GOLDP 0x10041030
-static LegoU8 __fastcall BucketCommandsBySortByte2(
+// FUNCTION: GOLDP 0x10041030
+LegoU8 __fastcall BucketCommandsBySortByte2(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command
 )
@@ -94,8 +94,8 @@ static LegoU8 __fastcall BucketCommandsBySortByte2(
 	return static_cast<LegoU8>(bucketIndex);
 }
 
-// STUB: GOLDP 0x10041060
-static LegoU8 __fastcall BucketCommandsBySortByte1(
+// FUNCTION: GOLDP 0x10041060
+LegoU8 __fastcall BucketCommandsBySortByte1(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command
 )
@@ -113,8 +113,8 @@ static LegoU8 __fastcall BucketCommandsBySortByte1(
 	return static_cast<LegoU8>(bucketIndex);
 }
 
-// STUB: GOLDP 0x10041090
-static LegoU8 __fastcall BucketCommandsBySortByte0(
+// FUNCTION: GOLDP 0x10041090
+LegoU8 __fastcall BucketCommandsBySortByte0(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command
 )
@@ -133,7 +133,7 @@ static LegoU8 __fastcall BucketCommandsBySortByte0(
 }
 
 // FUNCTION: GOLDP 0x100410c0
-static void SortCommandListBySortKey(GolSoftwareRenderer::TriangleCommand** p_head)
+void SortCommandListBySortKey(GolSoftwareRenderer::TriangleCommand** p_head)
 {
 	GolSoftwareRenderer::TriangleCommand* buckets0[256];
 	GolSoftwareRenderer::TriangleCommand* buckets1[256];
@@ -216,7 +216,7 @@ void GolSoftwareRenderer::SetupPipeline(RasterizerPipeline* p_buffer, GolMateria
 					rasterizerMode |= c_flag0x2cBit2;
 				}
 				else {
-					rasterizerMode |= c_flag0x2cBit4; // TODO: this is folded with a wrong but equivalent line
+					rasterizerMode |= c_flag0x2cBit4;
 				}
 			}
 			else {
@@ -234,7 +234,6 @@ void GolSoftwareRenderer::SetupPipeline(RasterizerPipeline* p_buffer, GolMateria
 	}
 	else {
 		FUN_100330d0(this, NULL);
-		// TODO: Can't get a `& 0xff` to appear
 		rasterizerMode = flags & GolMaterial::c_flagGouraudShading ? c_flag0x2cBit0 : 0;
 	}
 
@@ -480,7 +479,7 @@ void GolSoftwareRenderer::FUN_100417a0(TriangleCommand* p_cmds, LegoU32 p_count,
 	}
 }
 
-// STUB: GOLDP 0x100417c0
+// FUNCTION: GOLDP 0x100417c0
 void GolSoftwareRenderer::FUN_100417c0(TriangleCommand* p_cmds, LegoU32 p_count)
 {
 	while (p_count != 0) {
@@ -576,7 +575,7 @@ void GolSoftwareRenderer::FUN_10041830(LegoS32 p_count, LegoBool p_sort)
 	m_nodes->m_next = NULL;
 }
 
-// STUB: GOLDP 0x10041980
+// FUNCTION: GOLDP 0x10041980
 static LegoS32 __fastcall BucketCommandArrayBySortByte0(
 	GolSoftwareRenderer::TriangleCommand** p_buckets,
 	GolSoftwareRenderer::TriangleCommand* p_command,
@@ -598,7 +597,7 @@ static LegoS32 __fastcall BucketCommandArrayBySortByte0(
 	return result;
 }
 
-// STUB: GOLDP 0x100419b0
+// FUNCTION: GOLDP 0x100419b0
 void GolSoftwareRenderer::DrawCommandList()
 {
 	TriangleCommand* command = m_commandHead;

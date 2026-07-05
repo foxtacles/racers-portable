@@ -44,6 +44,9 @@ extern LegoU32 g_raceLapCount;
 extern LegoU32 g_randomTableIndex;
 
 DECOMP_SIZE_ASSERT(RaceSession, 0x3368)
+
+// GLOBAL: LEGORACERS 0x004b08c0
+extern const LegoFloat g_unk0x004b08c0 = 1.75f;
 DECOMP_SIZE_ASSERT(InputEventSink, 0x04)
 DECOMP_SIZE_ASSERT(RaceSession::RabTxtParser, 0x1fc)
 DECOMP_SIZE_ASSERT(RacerContext, 0x40)
@@ -449,8 +452,8 @@ void RaceSession::Run()
 
 				if (frameSampleCount >= 64) {
 					frameSampleElapsedMs >>= 6;
-					frameSampleCount = 0;
 					m_fps = 1.0f / (static_cast<LegoFloat>((LegoS32) frameSampleElapsedMs) * 0.001f);
+					frameSampleCount = 0;
 					frameSampleElapsedMs = 0;
 				}
 			}
@@ -844,7 +847,7 @@ void RaceSession::DestroyDatabases()
 	m_trackCamera = NULL;
 }
 
-// STUB: LEGORACERS 0x00433190
+// FUNCTION: LEGORACERS 0x00433190
 void RaceSession::LoadRouteRecords(LegoBool32 p_mirror)
 {
 	LegoChar fileName[12];
@@ -961,7 +964,7 @@ void RaceSession::DestroyRouteRecords()
 	} while (--remaining);
 }
 
-// STUB: LEGORACERS 0x00433480
+// FUNCTION: LEGORACERS 0x00433480
 void RaceSession::LoadRaceContent(LegoBool32 p_mirror)
 {
 	if (m_checkpointFileName[0]) {
@@ -1385,7 +1388,7 @@ void RaceSession::CreateCameras()
 			currentCamera->GetTransform()->SetPosition(&m_cameraStartPosition);
 			currentCamera->m_flags |= GolCamera::c_flagViewDirty;
 
-			m_cameras[i]->GetTransform()->VTable0x24(&m_cameraStartDirection, &m_cameraStartUp);
+			m_cameras[i]->GetTransform()->SetDirectionUp(&m_cameraStartDirection, &m_cameraStartUp);
 			m_cameras[i]->m_flags |= GolCamera::c_flagViewDirty;
 
 			Rect viewport;
@@ -1468,7 +1471,7 @@ void RaceSession::StartIntroCamera()
 	}
 }
 
-// STUB: LEGORACERS 0x004343e0
+// FUNCTION: LEGORACERS 0x004343e0
 void RaceSession::InitializeInput()
 {
 	RaceSession* session = this;
@@ -1709,7 +1712,7 @@ void RaceSession::UpdateIntroState()
 		currentCamera = *camera;
 		GolVec3* rightPtr = &right;
 		GolVec3* forwardPtr = &forward;
-		currentCamera->m_transform->VTable0x1c(forwardPtr, rightPtr);
+		currentCamera->m_transform->GetDirectionUp(forwardPtr, rightPtr);
 
 		RaceCameraController* cameraController = m_cameraControllers;
 		LegoS32 remaining = sizeOfArray(m_cameraControllers);
@@ -1739,21 +1742,21 @@ void RaceSession::UpdateIntroState()
 
 			LegoU32 i = 0;
 			if (m_context->m_playerCount > 0) {
-				RaceHud* cobaltTrail = m_huds;
 				RaceForceFeedback* forceFeedback = m_forceFeedback;
 				Racer** racer = m_raceState.m_playerRacers;
+				RaceHud* hud = m_huds;
 				do {
 					(*racer)->ReapplyCameraView();
 					if (!m_returnToGarage) {
-						cobaltTrail->StartCountdown();
+						hud->StartCountdown();
 					}
 					(*racer)->StartEngine();
 					forceFeedback->StartEngineEffect();
 
-					RaceHud* nextCobaltTrail = cobaltTrail + 1;
+					RaceHud* nextHud = hud + 1;
 					i++;
 					racer++;
-					cobaltTrail = nextCobaltTrail;
+					hud = nextHud;
 					forceFeedback++;
 				} while (i < m_context->m_playerCount);
 			}
@@ -2043,8 +2046,9 @@ void RaceSession::Update()
 {
 	LegoU32 elapsedMs = m_golApp->GetFrameDeltaMs();
 	if (m_context->m_cheatFlags & c_cheatFastForward) {
-		elapsedMs =
-			static_cast<LegoU32>(static_cast<LegoFloat>(static_cast<LegoS32>(m_golApp->GetFrameDeltaMs())) * 1.75f);
+		elapsedMs = static_cast<LegoU32>(
+			static_cast<LegoFloat>(static_cast<LegoS32>(m_golApp->GetFrameDeltaMs())) * g_unk0x004b08c0
+		);
 	}
 
 	if (!m_pauseState ||
@@ -2246,6 +2250,7 @@ void RaceSession::Draw()
 }
 
 // Separate helpers keep MSVC from merging the identical switch arms in Draw; ICF folds the bodies.
+
 // FUNCTION: LEGORACERS 0x004357b0 FOLDED
 void RaceSession::DrawRacerViewportForState1(Racer* p_racer)
 {
@@ -2544,7 +2549,7 @@ void RaceSession::BindSurfaceMaterials(LegoBool32 p_mirror)
 	}
 }
 
-// STUB: LEGORACERS 0x00435e70
+// FUNCTION: LEGORACERS 0x00435e70
 void RaceSession::BindCheckpointMaterials()
 {
 	LegoU32 materialIndex;

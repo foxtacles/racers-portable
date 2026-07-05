@@ -80,7 +80,7 @@ void BeamMesh::Reset()
 	m_vertexCapacity = 0;
 }
 
-// STUB: LEGORACERS 0x00493c90
+// FUNCTION: LEGORACERS 0x00493c90
 void BeamMesh::Initialize(const SetupParams* p_params)
 {
 	if (m_model != NULL) {
@@ -226,7 +226,7 @@ void BeamMesh::AdvanceSection(const GolVec3* p_position)
 	vector.m_x = 0.0f;
 	vector.m_y = 0.0f;
 	vector.m_z = 1.0f;
-	transform->VTable0x28(&transformed, &vector);
+	transform->SetRightDirection(&transformed, &vector);
 
 	m_sectionIndex++;
 	m_lastPosition = *p_position;
@@ -356,7 +356,7 @@ void BeamMesh::EmitQuads()
 	}
 }
 
-// STUB: LEGORACERS 0x004944e0
+// FUNCTION: LEGORACERS 0x004944e0
 void BeamMesh::FlushWindow()
 {
 	LegoU32 vertexCount = m_vertexCursor - m_runStartVertex;
@@ -399,7 +399,7 @@ void BeamMesh::FlushWindow()
 	m_runStartIndex = m_indexCursor;
 }
 
-// STUB: LEGORACERS 0x004946b0
+// FUNCTION: LEGORACERS 0x004946b0
 void BeamMesh::FlushRuns()
 {
 	LegoU32 vertexCount = m_vertexCursor - m_runStartVertex;
@@ -631,7 +631,7 @@ GolSceneNode* BeamEntity::GetSceneNode(undefined4)
 	return m_sceneNode;
 }
 
-// STUB: LEGORACERS 0x00494ca0
+// FUNCTION: LEGORACERS 0x00494ca0
 void BeamEntity::Draw(GolRenderDevice& p_renderer)
 {
 	if (m_faceCamera != 0) {
@@ -647,12 +647,12 @@ void BeamEntity::Draw(GolRenderDevice& p_renderer)
 		for (LegoU32 i = 0; i < m_sceneNode->GetCapacity(); i++) {
 			GolTransformBase* transform = m_sceneNode->GetTransform(i);
 			GolVec3 right;
-			transform->VTable0x20(&cameraRight, &right);
+			transform->GetRightDirection(&cameraRight, &right);
 
 			LegoFloat dot =
 				localRight.m_z * cameraRight.m_z + localRight.m_y * cameraRight.m_y + localRight.m_x * cameraRight.m_x;
 			if (dot < 1.0f && dot > g_minSoundPan) {
-				transform->VTable0x28(&cameraRight, &localRight);
+				transform->SetRightDirection(&cameraRight, &localRight);
 			}
 		}
 	}

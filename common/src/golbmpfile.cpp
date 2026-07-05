@@ -329,8 +329,8 @@ void GolBmpFile::ReadHeader()
 	}
 }
 
-// STUB: GOLDP 0x100197a0
-// STUB: LEGORACERS 0x004021d0
+// FUNCTION: GOLDP 0x100197a0
+// FUNCTION: LEGORACERS 0x004021d0
 void GolBmpFile::LoadSurface(GolSurface* p_texture, LegoU32 p_flags, ColorRGBA* p_colorKey)
 {
 	LegoU32 heightScale = 1;
@@ -512,8 +512,8 @@ void GolBmpFile::LoadSurface(GolSurface* p_texture, LegoU32 p_flags, ColorRGBA* 
 	p_texture->UnlockPixels();
 }
 
-// STUB: GOLDP 0x10019da0
-// STUB: LEGORACERS 0x004027d0
+// FUNCTION: GOLDP 0x10019da0
+// FUNCTION: LEGORACERS 0x004027d0
 void GolBmpFile::LoadSurfaceFromBuffer(LegoU8* p_buffer, GolSurface* p_texture, LegoU32 p_flags, ColorRGBA* p_colorKey)
 {
 	LegoU32 widthScale = 1;
@@ -699,8 +699,8 @@ void GolBmpFile::ReadPixels(LegoU8* p_buffer)
 	}
 }
 
-// STUB: GOLDP 0x1001a340
-// STUB: LEGORACERS 0x00402d70
+// FUNCTION: GOLDP 0x1001a340
+// FUNCTION: LEGORACERS 0x00402d70
 void GolBmpFile::LoadTiledTexture(GolTiledTexture* p_image, LegoU32 p_flags, ColorRGBA* p_colorKey)
 {
 	LegoU32 tileColumnCount = p_image->GetTileColumnCount();

@@ -37,6 +37,7 @@ public:
 
 	// SYNTHETIC: LEGORACERS 0x004583f0
 	// OilSlickAction::`vector deleting destructor'
+
 	void Update(LegoU32 p_elapsedMs) override;          // vtable+0x08
 	void Draw(GolD3DRenderDevice* p_renderer) override; // vtable+0x0c
 	void AdvanceState() override;                       // vtable+0x14
@@ -55,14 +56,14 @@ public:
 	void Activate(Racer* p_racer);
 
 private:
-	RacePowerupManager* m_manager;                      // 0x02c
-	GolWorldEntity m_worldEntity;                       // 0x030
-	SpatialSoundInstance* m_sound;                      // 0x058
-	CutsceneAnimation* m_particleAnimation;             // 0x05c
-	CutsceneParticleRef* m_bubbleParticle;              // 0x060
-	RaceDecalManager::Trail::Decal m_slickDecal;        // 0x064
-	GolBillboard::ManagedMaterialTable m_materialTable; // 0x180
-	GolCollidableEntity* m_collidable;                  // 0x18c
+	RacePowerupManager* m_manager;               // 0x02c
+	GolWorldEntity m_worldEntity;                // 0x030
+	SpatialSoundInstance* m_sound;               // 0x058
+	CutsceneAnimation* m_particleAnimation;      // 0x05c
+	CutsceneParticleRef* m_bubbleParticle;       // 0x060
+	RaceDecalManager::Trail::Decal m_slickDecal; // 0x064
+	ManagedMaterialTable m_materialTable;        // 0x180
+	GolCollidableEntity* m_collidable;           // 0x18c
 };
 
 #endif // OILSLICKACTION_H

@@ -68,40 +68,6 @@ RaceModeRunner* g_raceModeRunner = NULL;
 // GLOBAL: LEGORACERS 0x004c491c
 LegoChar g_raceNameBuffer[9];
 
-// FUNCTION: LEGORACERS 0x0042b130
-void RaceModeRunner::Run(LegoRacers::Context* p_context)
-{
-	g_raceModeRunner = new RaceModeRunner();
-	if (!g_raceModeRunner) {
-		GolFatalError(c_golErrorOutOfMemory, NULL, 0);
-	}
-
-	g_raceModeRunner->Initialize(p_context);
-	g_raceModeRunner->Run();
-	g_raceModeRunner->Shutdown();
-
-	if (g_raceModeRunner) {
-		delete g_raceModeRunner;
-	}
-}
-
-// FUNCTION: LEGORACERS 0x0042b1e0
-void MenuManager::Run(LegoRacers::Context* p_context)
-{
-	g_menuManager = new MenuManager();
-	if (!g_menuManager) {
-		GolFatalError(c_golErrorOutOfMemory, NULL, 0);
-	}
-
-	g_menuManager->Initialize(p_context);
-	g_menuManager->Run();
-	g_menuManager->Shutdown();
-
-	if (g_menuManager) {
-		delete g_menuManager;
-	}
-}
-
 // FUNCTION: LEGORACERS 0x0042c1b0
 RaceModeRunner::RaceModeRunner()
 {
@@ -240,6 +206,7 @@ void RaceModeRunner::InitializeRaceScene()
 
 	m_session.Initialize(m_context, g_raceNameBuffer, m_context->m_raceSlots[0].m_mirror, NULL);
 }
+
 // FUNCTION: LEGORACERS 0x0042c5d0
 MenuManager::MenuManager()
 {
@@ -395,7 +362,7 @@ void MenuManager::SetupCamera()
 
 	lens->GetTransform()->SetPosition(&position);
 	lens->m_flags |= GolCamera::c_flagViewDirty;
-	lens->GetTransform()->VTable0x24(&right, &forward);
+	lens->GetTransform()->SetDirectionUp(&right, &forward);
 	lens->m_flags |= GolCamera::c_flagViewDirty;
 	m_renderer->SetCamera(lens);
 }
@@ -718,7 +685,7 @@ void MenuManager::Run()
 	}
 }
 
-// STUB: LEGORACERS 0x0042d730
+// FUNCTION: LEGORACERS 0x0042d730
 void MenuManager::PrepareRaceContext()
 {
 	GolString string;
@@ -1019,7 +986,7 @@ void MenuManager::ReleasePartResources()
 	m_gameContext.m_partCatalog.Destroy();
 }
 
-// STUB: LEGORACERS 0x0042dfa0
+// FUNCTION: LEGORACERS 0x0042dfa0
 void MenuManager::BuildPlayerDriverModel(
 	SaveRecordList::Record* p_record,
 	LegoRacers::Context::PlayerSetupSlot* p_slot,
@@ -1164,7 +1131,7 @@ void MenuManager::ApplySettings()
 			if (deviceIndex < drawState->GetDeviceCount(driverIndex)) {
 				const LegoChar* deviceName = drawState->GetDeviceName(driverIndex, deviceIndex);
 				drawState->SelectDevice(driverName, deviceName);
-				selectedDrawFlags = GolDrawState::c_flagBit14;
+				selectedDrawFlags = GolDrawState::c_flagDeviceSelected;
 			}
 		}
 	}
@@ -1213,7 +1180,7 @@ LegoBool32 MenuManager::HasPendingMemoryCardSaves()
 	return FALSE;
 }
 
-// STUB: LEGORACERS 0x0042e490
+// FUNCTION: LEGORACERS 0x0042e490
 LegoS32 MenuManager::CommitBestTimes()
 {
 	LegoU8 flags = m_gameContext.m_context->m_flags;

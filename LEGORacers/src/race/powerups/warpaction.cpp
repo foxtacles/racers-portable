@@ -28,8 +28,6 @@ extern const LegoFloat g_negativeRadiansToTableIndex;
 
 extern const LegoFloat g_homingProjectileCollisionProbeDepth;
 
-extern const LegoFloat g_homingProjectileCollisionStartOffset;
-
 extern const LegoFloat g_unk0x004b02fc;
 
 // GLOBAL: LEGORACERS 0x004b1a60
@@ -49,6 +47,12 @@ const LegoFloat g_warpLaunchSpeed = 700.0f;
 
 // GLOBAL: LEGORACERS 0x004b1aa8
 const LegoFloat g_warpLerpScale = 0.00066666666f;
+
+// FUNCTION: LEGORACERS 0x0044f580 FOLDED
+LegoS32 WarpAction::GetBrickColor()
+{
+	return PowerupAction::c_brickColorGreen;
+}
 
 // FUNCTION: LEGORACERS 0x0045d400
 WarpAction::WarpAction()
@@ -353,9 +357,7 @@ void WarpAction::AdvanceState()
 		}
 
 		CarVisuals* racerField = &m_racer->m_visuals;
-		GolAnimatedEntity** entitySlot = &racerField->m_carEntity;
-		GolAnimatedEntity* entity = *entitySlot;
-		entity->GetPosition(&m_startPosition);
+		racerField->m_carEntity->GetPosition(&m_startPosition);
 
 		if (!m_isDemoRacer) {
 			m_soundSource->PlaySoundById(c_soundStart);
@@ -483,13 +485,13 @@ void WarpAction::TeleportEntity(GolWorldEntity* p_entity)
 
 	GolVec3 start = position;
 	GolVec3 end = position;
-	end.m_z += g_homingProjectileCollisionStartOffset;
-	start.m_z += g_homingProjectileCollisionStartOffset;
+	end.m_z += 5.0f;
+	start.m_z += 5.0f;
 	start.m_z -= g_homingProjectileCollisionProbeDepth;
 
 	GolBoundingVolume::HitTriangle record;
 	m_manager->m_collisionWorld->IntersectSegment(&start, &end, &record, &position, NULL);
 
-	position.m_z += g_homingProjectileCollisionStartOffset;
+	position.m_z += 5.0f;
 	p_entity->SetPosition(position);
 }

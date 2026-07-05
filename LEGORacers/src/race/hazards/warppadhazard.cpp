@@ -11,16 +11,22 @@
 
 DECOMP_SIZE_ASSERT(WarpPadHazard, 0x18)
 
+// GLOBAL: LEGORACERS 0x004b4178
 static const LegoFloat g_warpPadActionPositionX = 132.673004f;
 
+// GLOBAL: LEGORACERS 0x004b417c
 static const LegoFloat g_warpPadActionPositionY = 86.304001f;
 
+// GLOBAL: LEGORACERS 0x004b4180
 static const LegoFloat g_warpPadActionPositionZ = 14.722000f;
 
+// GLOBAL: LEGORACERS 0x004b4188
 static const LegoFloat g_warpPadActionDirectionX = 1.0f;
 
+// GLOBAL: LEGORACERS 0x004b418c
 static const LegoFloat g_warpPadActionDirectionY = -0.5f;
 
+// GLOBAL: LEGORACERS 0x004b4190
 static const LegoFloat g_warpPadActionDirectionZ = 0.0f;
 
 // FUNCTION: LEGORACERS 0x0048ae80
@@ -49,8 +55,7 @@ void WarpPadHazard::Load(HazardContext* p_context, GolFileParser*)
 	m_state = c_stateLoaded;
 }
 
-#pragma code_seg(".text$warppadhazard_reset")
-// FUNCTION: LEGORACERS 0x0048af50
+// FUNCTION: LEGORACERS 0x0048af50 FOLDED
 LegoS32 WarpPadHazard::Reset()
 {
 	OnDeactivate(NULL);
@@ -58,7 +63,6 @@ LegoS32 WarpPadHazard::Reset()
 	m_mirror = 0;
 	return Hazard::Reset();
 }
-#pragma code_seg()
 
 // FUNCTION: LEGORACERS 0x0048af80
 void WarpPadHazard::OnActivate(void* p_racer)
@@ -94,7 +98,6 @@ void WarpPadHazard::OnDeactivate(void* p_context)
 	}
 }
 
-#pragma code_seg(".text$hazard_masked_update")
 // FUNCTION: LEGORACERS 0x0048b060 FOLDED
 void WarpPadHazard::Update(undefined4 p_elapsedMs)
 {
@@ -102,12 +105,3 @@ void WarpPadHazard::Update(undefined4 p_elapsedMs)
 		Hazard::Update(p_elapsedMs);
 	}
 }
-#pragma code_seg()
-
-#pragma code_seg(".text$animatedpartresource_vt18")
-// FUNCTION: LEGORACERS 0x00452430 FOLDED
-LegoBool32 WarpPadHazard::CanRetrigger()
-{
-	return 1;
-}
-#pragma code_seg()

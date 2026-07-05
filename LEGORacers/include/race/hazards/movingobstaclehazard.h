@@ -3,6 +3,7 @@
 
 #include "golmath.h"
 #include "golmodelentity.h"
+#include "managedmaterialtable.h"
 #include "material/materialtable.h"
 #include "race/hazards/hazard.h"
 #include "race/hazards/hazardcontext.h"
@@ -51,7 +52,7 @@ private:
 	LegoEventQueue::Event* m_collisionEvent;      // 0x3c
 	LegoEventQueue* m_eventQueue;                 // 0x40
 	RaceDecalManager::Trail::Decal m_shadowDecal; // 0x44
-	MaterialTable m_shadowMaterialTable;          // 0x160
+	ManagedMaterialTable m_shadowMaterialTable;   // 0x160
 	GolCollidableEntity* m_trackCollidable;       // 0x16c
 	SpatialSoundInstance* m_loopSound;            // 0x170
 	RacerSoundSource* m_soundSource;              // 0x174

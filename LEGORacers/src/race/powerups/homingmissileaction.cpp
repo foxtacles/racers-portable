@@ -16,15 +16,20 @@
 #include <float.h>
 #include <math.h>
 
+// GLOBAL: LEGORACERS 0x004b1654
+const LegoFloat g_missileTargetHeightOffset = 5.0f;
+
 // GLOBAL: LEGORACERS 0x004b165c
 extern const LegoFloat g_missileFireSoundMinDistance = 30.0f;
 
 // GLOBAL: LEGORACERS 0x004b1660
 extern const LegoFloat g_missileFireSoundMaxDistance = 300.0f;
 
-const LegoFloat g_missileTargetMaxDistanceSquared = 160000.0f;
-
+// GLOBAL: LEGORACERS 0x004b1684
 const LegoFloat g_missileTargetMinDistanceSquared = 100.0f;
+
+// GLOBAL: LEGORACERS 0x004b1688
+const LegoFloat g_missileTargetMaxDistanceSquared = 160000.0f;
 
 extern const LegoFloat g_scarNormalThreshold;
 
@@ -192,7 +197,7 @@ void HomingMissileAction::LaunchProjectile()
 		GolVec3 target;
 		target.m_x = position.m_x + scaledDirection.m_x;
 		target.m_y = position.m_y + scaledDirection.m_y;
-		target.m_z = position.m_z + scaledDirection.m_z + g_missileLaunchHeight;
+		target.m_z = position.m_z + scaledDirection.m_z + g_missileTargetHeightOffset;
 
 		if (m_missileIndex == 0) {
 			target.m_x += direction.m_y * 150.0f;
@@ -230,7 +235,7 @@ void HomingMissileAction::Deactivate()
 	}
 }
 
-// STUB: LEGORACERS 0x004568f0
+// FUNCTION: LEGORACERS 0x004568f0
 void HomingMissileAction::Update(LegoU32 p_elapsedMs)
 {
 	GolVec3 direction;
@@ -375,7 +380,7 @@ void HomingMissileAction::Draw(GolD3DRenderDevice* p_renderer)
 		up.m_x = 0.0f;
 		up.m_y = 0.0f;
 		up.m_z = 1.0f;
-		transform->VTable0x28(&direction, &up);
+		transform->SetRightDirection(&direction, &up);
 
 		p_renderer->DrawModelEntity(&m_missileEntity);
 	}

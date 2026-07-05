@@ -6,7 +6,6 @@ extern LegoU16 g_randomTable[1024];
 extern LegoU32 g_randomTableIndex;
 extern LegoFloat g_carBuildPreviewMouseScale;
 extern LegoFloat g_minSoundPan;
-extern const LegoFloat g_violetShoalTwo;
 
 // GLOBAL: LEGORACERS 0x004b0058
 extern const LegoFloat g_driveMaxTurnRadius = 4096.0f;
@@ -38,6 +37,12 @@ extern const LegoFloat g_returnPathMinClosing = 0.00050000002f;
 // GLOBAL: LEGORACERS 0x004b007c
 extern const LegoFloat g_slideSteerAssistMin = 0.050000001f;
 
+// GLOBAL: LEGORACERS 0x004b0080
+extern const LegoFloat g_unk0x004b0080 = 0.03f;
+
+// GLOBAL: LEGORACERS 0x004b0084
+extern const LegoFloat g_unk0x004b0084 = 0.0089999996f;
+
 // GLOBAL: LEGORACERS 0x004b0088
 extern const LegoFloat g_returnPathArriveDistance = 3.0f;
 
@@ -49,6 +54,9 @@ extern const LegoFloat g_returnPathMaxAdvanceDistance = 80.0f;
 
 // GLOBAL: LEGORACERS 0x004b0094
 extern const LegoFloat g_returnPathThrust = 18.0f;
+
+// GLOBAL: LEGORACERS 0x004b009c
+extern const LegoFloat g_two = 2.0f;
 
 // GLOBAL: LEGORACERS 0x004c4810
 LegoFloat g_turboThrust = g_fullThrottleThrust * 8.0f;
@@ -123,7 +131,7 @@ void DriveController::Update(LegoU32 p_elapsedMs)
 
 			g_randomTableIndex = (g_randomTableIndex + 1) & 0x3ff;
 			LegoS32 random = static_cast<LegoS32>(g_randomTable[g_randomTableIndex]) % 400;
-			m_curseSteerOffset = static_cast<LegoFloat>(random) * g_carBuildPreviewMouseScale - g_violetShoalTwo;
+			m_curseSteerOffset = static_cast<LegoFloat>(random) * g_carBuildPreviewMouseScale - g_two;
 
 			g_randomTableIndex = (g_randomTableIndex + 1) & 0x3ff;
 			random = static_cast<LegoS32>(g_randomTable[g_randomTableIndex]) % 200;
@@ -136,7 +144,7 @@ void DriveController::Update(LegoU32 p_elapsedMs)
 
 	flags = m_flags;
 	if (flags & c_flagSliding) {
-		if (m_physics->m_forwardSpeed < 0.03f) {
+		if (m_physics->m_forwardSpeed < g_unk0x004b0080) {
 			m_slideMs = 0;
 			ReleaseSlide();
 		}
@@ -201,7 +209,7 @@ void DriveController::UpdateStuckDetection(LegoU32 p_elapsedMs)
 		}
 	}
 	else {
-		if (physics->m_forwardSpeed > 0.009f || -0.009f > physics->m_forwardSpeed) {
+		if (physics->m_forwardSpeed > g_unk0x004b0084 || -g_unk0x004b0084 > physics->m_forwardSpeed) {
 			m_stuckMs = 0;
 		}
 		else if (m_stuckMs >= 1000) {

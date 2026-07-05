@@ -1,6 +1,7 @@
 #include "golorientedentity.h"
 
 #include "decomp.h"
+#include "golworldentity.h"
 
 DECOMP_SIZE_ASSERT(GolOrientedEntity, 0x58)
 
@@ -318,6 +319,15 @@ void GolOrientedEntity::SetBoundsCenterAndSpan(const GolVec3& p_v)
 	m_maxX = m_center.m_x + m_radius;
 	m_minX = m_center.m_x - m_radius;
 	m_maxX = m_center.m_x + m_radius;
+}
+
+// FUNCTION: GOLDP 0x10026fa0 FOLDED
+// FUNCTION: LEGORACERS 0x00410f10
+void GolWorldEntity::SetBoundsRadius(LegoFloat p_scalar)
+{
+	m_radius = p_scalar;
+	m_minX = m_center.m_x - p_scalar;
+	m_maxX = p_scalar + m_center.m_x;
 }
 
 // FUNCTION: LEGORACERS 0x00410f30

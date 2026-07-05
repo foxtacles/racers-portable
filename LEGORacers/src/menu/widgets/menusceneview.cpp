@@ -261,7 +261,7 @@ void MenuSceneView::UpdateFreeCamera(undefined4 p_elapsedMs)
 
 	GolVec3* forward = &m_forward;
 	GolVec3* right = &m_right;
-	m_camera->GetTransform()->VTable0x1c(right, forward);
+	m_camera->GetTransform()->GetDirectionUp(right, forward);
 
 	GolVec3* axis = &m_up;
 	LegoFloat axisX = right->m_y;
@@ -316,7 +316,7 @@ void MenuSceneView::UpdateFreeCamera(undefined4 p_elapsedMs)
 
 	lens->m_flags |= GolCamera::c_flagViewDirty;
 	GolCamera* currentLens = m_camera;
-	currentLens->GetTransform()->VTable0x24(right, forward);
+	currentLens->GetTransform()->SetDirectionUp(right, forward);
 	currentLens->m_flags |= GolCamera::c_flagViewDirty;
 }
 
@@ -432,12 +432,3 @@ undefined4 MenuSceneView::OnEvent(undefined4 p_elapsedMs)
 	UpdateFreeCamera(p_elapsedMs);
 	return 0;
 }
-
-// Keep this fold pair out of the unrelated MenuWidget null-return fold group.
-#pragma code_seg(".text$legoracers_00466090")
-// FUNCTION: LEGORACERS 0x00466090 FOLDED
-MenuWidget* MenuSceneView::OnCursorEvent(void*, undefined4, undefined4)
-{
-	return NULL;
-}
-#pragma code_seg()

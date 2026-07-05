@@ -147,7 +147,7 @@ MenuWidget* MenuTextField::OnCursorEvent(void* p_item, undefined4 p_x, undefined
 	return this;
 }
 
-// STUB: LEGORACERS 0x00471300
+// FUNCTION: LEGORACERS 0x00471300
 MenuWidget* MenuTextField::DrawSelf(Rect* p_rect, Rect* p_arg)
 {
 	LegoS32 xOffset = p_arg->m_left - p_rect->m_left;
@@ -322,12 +322,3 @@ MenuWidget* MenuTextField::OnKeyDown(InputEventQueue::Event* p_event, undefined4
 
 	return NULL;
 }
-
-// Keep this null-return override in the scene-widget null-return fold group.
-#pragma code_seg(".text$legoracers_00466090")
-// FUNCTION: LEGORACERS 0x00466090 FOLDED
-MenuWidget* MenuTextField::OnKeyUp(InputEventQueue::Event*, undefined4, undefined4)
-{
-	return NULL;
-}
-#pragma code_seg()

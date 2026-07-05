@@ -92,8 +92,8 @@ void GolAnimatedEntity::ResetPartIndices()
 	}
 }
 
-// STUB: GOLDP 0x10023580
-// STUB: LEGORACERS 0x0040d670
+// FUNCTION: GOLDP 0x10023580
+// FUNCTION: LEGORACERS 0x0040d670
 void GolAnimatedEntity::ApplyPartAnimation(LegoU32 p_index)
 {
 	if (!(m_flags & c_flagPartAnimation)) {
@@ -433,7 +433,7 @@ void GolAnimatedEntity::TransitionToPart(
 }
 
 // FUNCTION: GOLDP 0x10023b10
-// STUB: LEGORACERS 0x0040dd60
+// FUNCTION: LEGORACERS 0x0040dd60
 void GolAnimatedEntity::Update(LegoS32 p_elapsed)
 {
 	m_flags &= ~c_flagLoopWrapped;
@@ -542,8 +542,8 @@ void GolAnimatedEntity::Update(LegoS32 p_elapsed)
 	GolModelEntity::Update(p_elapsed);
 }
 
-// STUB: GOLDP 0x10023ef0
-// STUB: LEGORACERS 0x0040e0b0
+// FUNCTION: GOLDP 0x10023ef0
+// FUNCTION: LEGORACERS 0x0040e0b0
 void GolAnimatedEntity::ComputeBoundsFromModel(LegoU32 p_index)
 {
 	GolModelBase* model = m_models[p_index];
@@ -643,7 +643,7 @@ LegoBool32 GolAnimatedEntity::IsPartAnimationDone()
 		   (!(flags & c_flagLoopCurrentPart) && static_cast<LegoFloat>(activePart.GetFrameCount() - 1) <= m_partTimeMs);
 }
 
-// STUB: LEGORACERS 0x0040e3c0
+// FUNCTION: LEGORACERS 0x0040e3c0
 void GolAnimatedEntity::SamplePartPosition(
 	LegoU32 p_modelIndex,
 	LegoU32 p_trackOffset,
@@ -666,7 +666,7 @@ void GolAnimatedEntity::SamplePartPosition(
 	animationData.InterpolatePosition(p_dest, track, time, frameCount);
 }
 
-// STUB: LEGORACERS 0x0040e420
+// FUNCTION: LEGORACERS 0x0040e420
 void GolAnimatedEntity::SamplePartRotation(
 	LegoU32 p_modelIndex,
 	LegoU32 p_trackOffset,

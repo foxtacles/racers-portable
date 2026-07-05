@@ -124,7 +124,7 @@ void RollingRockHazard::OnDeactivate(void*)
 	m_state = c_stateLoaded;
 }
 
-// STUB: LEGORACERS 0x0048be70
+// FUNCTION: LEGORACERS 0x0048be70
 void RollingRockHazard::Update(undefined4 p_elapsedMs)
 {
 	if (m_state != c_stateLoaded) {
@@ -140,7 +140,7 @@ void RollingRockHazard::Update(undefined4 p_elapsedMs)
 
 		GolVec3 right;
 		GolVec3 forward;
-		transform->VTable0x20(&right, &forward);
+		transform->GetRightDirection(&right, &forward);
 
 		GolVec3 origin = localPosition;
 		transform->TransformPoint(&origin, &localPosition);

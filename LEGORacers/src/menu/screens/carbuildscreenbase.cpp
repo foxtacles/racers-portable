@@ -35,7 +35,7 @@ undefined4 CarBuildScreenBase::OnWidgetKeyUp(MenuWidget* p_vantage, void* p_item
 		}
 	}
 	else {
-		if (m_selectedIcon != m_hoverIcon) {
+		if (m_hoverIcon != m_selectedIcon) {
 			m_hoverMs = 0;
 
 			if (m_selectedIcon == p_vantage) {
@@ -201,7 +201,7 @@ LegoBool32 CarBuildScreenBase::Update(undefined4 p_elapsed)
 	return MenuGameScreen::Update(p_elapsed);
 }
 
-// STUB: LEGORACERS 0x00475010
+// FUNCTION: LEGORACERS 0x00475010
 LegoBool32 CarBuildScreenBase::Draw(Rect* p_clipRect, Rect* p_sourceRect)
 {
 	LegoBool32 result = MenuScreen::Draw(p_clipRect, p_sourceRect);

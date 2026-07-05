@@ -7,7 +7,6 @@
 #include <math.h>
 
 DECOMP_SIZE_ASSERT(GolBillboard, 0x4c)
-DECOMP_SIZE_ASSERT(GolBillboard::ManagedMaterialTable, 0x0c)
 
 // GLOBAL: GOLDP 0x100574fc
 float g_pontoonMaxFloat = FLT_MAX;
@@ -48,6 +47,7 @@ void GolBillboard::Configure(
 }
 
 // FUNCTION: GOLDP 0x10029e90
+// FUNCTION: LEGORACERS 0x004133a0
 void GolBillboard::ConfigureFromMaterialTable(
 	MaterialTable* p_container,
 	LegoS32 p_index,

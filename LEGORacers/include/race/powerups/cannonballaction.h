@@ -36,6 +36,7 @@ public:
 
 	// SYNTHETIC: LEGORACERS 0x00458510
 	// CannonballAction::`vector deleting destructor'
+
 	void Update(LegoU32 p_elapsedMs) override;          // vtable+0x08
 	void Draw(GolD3DRenderDevice* p_renderer) override; // vtable+0x0c
 	void AdvanceState() override;                       // vtable+0x14
@@ -43,7 +44,7 @@ public:
 	void OnHitRacer(Racer* p_racer) override;           // vtable+0x20
 	void Initialize(RacePowerupManager* p_manager, TriggerWorld* p_collisionWorld);
 	void Destroy();
-	LegoU32 Activate(ActionSetup* p_setup);
+	void Activate(ActionSetup* p_setup);
 
 private:
 	// SIZE 0x24

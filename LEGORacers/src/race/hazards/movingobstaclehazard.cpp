@@ -19,10 +19,39 @@
 
 DECOMP_SIZE_ASSERT(MovingObstacleHazard, 0x17c)
 
+// GLOBAL: LEGORACERS 0x004b46fc
+const LegoFloat g_obstacleMaxRouteDistance = 300.0f;
+
+// GLOBAL: LEGORACERS 0x004b4700
+const LegoFloat g_obstacleTriggerRadius = 3.0f;
+
+// GLOBAL: LEGORACERS 0x004b4714
+const LegoFloat g_obstacleFrame150 = 150.0f;
+
+// GLOBAL: LEGORACERS 0x004b4718
+const LegoFloat g_obstacleFrame180 = 180.0f;
+
+// GLOBAL: LEGORACERS 0x004b471c
+const LegoFloat g_obstacleFrame0 = 0.0f;
+
+// GLOBAL: LEGORACERS 0x004b4720
+const LegoFloat g_obstacleFrame30 = 30.0f;
+
+// GLOBAL: LEGORACERS 0x004b4724
+const LegoFloat g_obstacleFrame60 = 60.0f;
+
+// GLOBAL: LEGORACERS 0x004b4728
+const LegoFloat g_obstacleFrame120 = 120.0f;
+
+// GLOBAL: LEGORACERS 0x004b472c
+const LegoFloat g_obstacleFrame210 = 210.0f;
+
+// GLOBAL: LEGORACERS 0x004b4730
+const LegoFloat g_obstacleFrame270 = 270.0f;
+
 // FUNCTION: LEGORACERS 0x0048fe30
 MovingObstacleHazard::MovingObstacleHazard()
 {
-	m_shadowMaterialTable.Reset();
 	m_entity = NULL;
 	m_collisionEvent = NULL;
 	m_eventQueue = NULL;
@@ -36,7 +65,6 @@ MovingObstacleHazard::MovingObstacleHazard()
 MovingObstacleHazard::~MovingObstacleHazard()
 {
 	Reset();
-	m_shadowMaterialTable.Destroy();
 }
 
 // FUNCTION: LEGORACERS 0x0048ff50
@@ -59,7 +87,7 @@ void MovingObstacleHazard::Load(HazardContext* p_context, GolFileParser*)
 	position.m_z = 0.0f;
 	m_trigger.ClearVelocity();
 	m_trigger.SetBoundsCenter(position);
-	m_trigger.SetBoundsRadius(3.0f);
+	m_trigger.SetBoundsRadius(g_obstacleTriggerRadius);
 
 	m_shadowMaterialTable.Initialize(p_context->GetRenderer(), 1);
 	m_shadowMaterialTable.AssignEntryByName(0, "crneshd");
@@ -95,7 +123,7 @@ void MovingObstacleHazard::OnActivate(void*)
 		m_loopSound->Play(TRUE);
 		m_loopSound->SetPosition(position);
 		m_loopSound->SetFrequencyScale(1.0f);
-		LegoFloat maxDistance = 300.0f;
+		LegoFloat maxDistance = g_obstacleMaxRouteDistance;
 		m_loopSound->SetDistanceRangeWithMinSquared(10000.0f, maxDistance);
 	}
 
@@ -152,12 +180,16 @@ void MovingObstacleHazard::Update(undefined4 p_elapsedMs)
 
 	LegoFloat frame = m_entity->GetPartTimeMs();
 	if ((m_flags & c_flagImpactPending) != 0) {
-		if ((frame > 150.0f && frame < 180.0f) || (frame > 0.0f && frame < 30.0f)) {
+		if ((frame > g_obstacleFrame150 && frame < g_obstacleFrame180) ||
+			(frame > g_obstacleFrame0 && frame < g_obstacleFrame30)) {
 			m_eventTable->FireEventsAt(c_impactEventId, c_impactEventId, &position);
 			m_flags &= ~c_flagImpactPending;
 		}
 	}
-	else if ((frame > 60.0f && frame < 120.0f) || (frame > 210.0f && frame < 270.0f)) {
+	else if (
+		(frame > g_obstacleFrame60 && frame < g_obstacleFrame120) ||
+		(frame > g_obstacleFrame210 && frame < g_obstacleFrame270)
+	) {
 		m_flags |= c_flagImpactPending;
 	}
 

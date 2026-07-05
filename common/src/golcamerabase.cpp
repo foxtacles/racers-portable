@@ -1,7 +1,9 @@
 #include "golcamerabase.h"
 
 #include "camera/goltransform.h"
+#include "gdbvertexarray.h"
 #include "golanimatedentity.h"
+#include "golboundingvolume.h"
 #include "golscenenode.h"
 #include "goltransformbase.h"
 
@@ -9,81 +11,41 @@
 
 DECOMP_SIZE_ASSERT(GolCameraBase, 0x120)
 
-// FUNCTION: LEGORACERS 0x004044f0
-LegoFloat GolCameraBase::Dot2(GolVec3* p_left, GolVec3* p_right)
+// FUNCTION: LEGORACERS 0x004045e0
+void GolBoundingVolume::MirrorY()
 {
-	return p_left->m_z * p_right->m_z + p_left->m_y * p_right->m_y + p_left->m_x * p_right->m_x;
+	LegoU32 i;
+	for (i = 0; i < m_nodeCount; i++) {
+		m_nodes[i].m_planeNormal.m_y = -m_nodes[i].m_planeNormal.m_y;
+	}
+
+	GolVec3* vertices = m_vertices->GetPositions();
+	for (i = 0; i < m_vertices->GetCount(); i++) {
+		vertices[i].m_y = -vertices[i].m_y;
+	}
+
+	for (i = 0; i < m_triangleCount; i++) {
+		LegoU16 value = m_triangles[i].m_vertex1;
+		m_triangles[i].m_vertex1 = m_triangles[i].m_vertex2;
+		m_triangles[i].m_vertex2 = value;
+	}
 }
 
-// FUNCTION: LEGORACERS 0x00404510
-GolVec3* GolCameraBase::Cross(GolVec3* p_left, GolVec3* p_right, GolVec3* p_dest)
+// FUNCTION: LEGORACERS 0x00404660
+GolVec3* GolBoundingVolume::BspNode::GetPlaneNormal(GolVec3* p_dest) const
 {
-	LegoFloat x = p_left->m_y;
-	x *= p_right->m_z;
-	x -= p_left->m_z * p_right->m_y;
-	p_dest->m_x = x;
+	p_dest->m_x = m_planeNormal.m_x;
+	p_dest->m_y = m_planeNormal.m_y;
+	p_dest->m_z = m_planeNormal.m_z;
 
-	LegoFloat y = p_left->m_z;
-	y *= p_right->m_x;
-	LegoFloat ySub = p_right->m_z;
-	ySub *= p_left->m_x;
-	y -= ySub;
-	p_dest->m_y = y;
-
-	LegoFloat z = p_right->m_y;
-	z *= p_left->m_x;
-	LegoFloat zSub = p_left->m_y;
-	zSub *= p_right->m_x;
-	z -= zSub;
-	p_dest->m_z = z;
-
-	return p_left;
+	return p_dest;
 }
 
-// FUNCTION: LEGORACERS 0x00404550
-GolVec3* GolCameraBase::Add(GolVec3* p_left, GolVec3* p_right, GolVec3* p_dest)
-{
-	p_dest->m_x = p_left->m_x + p_right->m_x;
-	p_dest->m_y = p_left->m_y + p_right->m_y;
-	p_dest->m_z = p_left->m_z + p_right->m_z;
-
-	return p_left;
-}
-
-// FUNCTION: LEGORACERS 0x00404580
-GolVec3* GolCameraBase::Subtract(GolVec3* p_left, GolVec3* p_right, GolVec3* p_dest)
-{
-	p_dest->m_x = p_left->m_x - p_right->m_x;
-	p_dest->m_y = p_left->m_y - p_right->m_y;
-	p_dest->m_z = p_left->m_z - p_right->m_z;
-
-	return p_left;
-}
-
-// FUNCTION: LEGORACERS 0x004045b0
-GolVec3* GolCameraBase::Scale(GolVec3* p_src, LegoFloat p_scale, GolVec3* p_dest)
-{
-	p_dest->m_x = p_scale * p_src->m_x;
-
-	LegoFloat y = p_src->m_y;
-	y *= p_scale;
-	p_dest->m_y = y;
-
-	LegoFloat z = p_src->m_z;
-	z *= p_scale;
-	p_dest->m_z = z;
-
-	return p_src;
-}
-
-// TODO: Unique section prevents ICF; the original keeps both dot helpers as distinct functions.
-#pragma code_seg(".text$golcamerabase_00404680")
 // FUNCTION: LEGORACERS 0x00404680
 LegoFloat GolCameraBase::Dot(GolVec3* p_left, GolVec3* p_right)
 {
 	return p_left->m_z * p_right->m_z + p_left->m_y * p_right->m_y + p_left->m_x * p_right->m_x;
 }
-#pragma code_seg()
 
 // FUNCTION: LEGORACERS 0x004046a0
 void GolCameraBase::LookAt(GolVec3* p_position, GolVec3* p_target, GolVec3* p_up)
@@ -98,7 +60,7 @@ void GolCameraBase::LookAt(GolVec3* p_position, GolVec3* p_target, GolVec3* p_up
 	up.m_y = -p_up->m_y;
 	up.m_z = -p_up->m_z;
 
-	m_transform->VTable0x24(&forward, &up);
+	m_transform->SetDirectionUp(&forward, &up);
 	m_transform->SetPosition(p_position);
 }
 
@@ -151,7 +113,7 @@ GolCameraBase::~GolCameraBase()
 {
 }
 
-// STUB: GOLDP 0x1001bfc0
+// FUNCTION: GOLDP 0x1001bfc0
 void GolCameraBase::ComputeFrustum(GolViewFrustum* p_view)
 {
 	m_transform->GetPosition(&p_view->m_position);
@@ -255,7 +217,7 @@ void GolCameraBase::ComputeFrustum(GolViewFrustum* p_view)
 	p_view->m_planes[4].m_distance = -GOLVECTOR3_DOT(normal, p_view->m_corners[2]);
 }
 
-// STUB: GOLDP 0x1001c450
+// FUNCTION: GOLDP 0x1001c450
 void GolCameraBase::ComputeFrustumFromBounds(GolViewFrustum* p_view)
 {
 	m_transform->GetPosition(&p_view->m_position);
@@ -361,7 +323,7 @@ void GolCameraBase::ComputeFrustumFromBounds(GolViewFrustum* p_view)
 	p_view->m_planes[4].m_distance = -GOLVECTOR3_DOT(normal, p_view->m_corners[2]);
 }
 
-// STUB: GOLDP 0x1001c900
+// FUNCTION: GOLDP 0x1001c900
 LegoBool32 GolCameraBase::ProjectSphere(GolVec3* p_center, LegoFloat p_radius, GolVec4* p_bounds)
 {
 	LegoBool32 visibility = m_viewFrustum.ClassifySphere(*p_center, p_radius);
@@ -475,7 +437,7 @@ void GolCameraBase::UpdateFromTrackedEntity()
 	GolVec3 transformedRight;
 	GolVec3 transformedForward;
 	orbit->GetPosition(&position);
-	orbit->VTable0x20(&right, &forward);
+	orbit->GetRightDirection(&right, &forward);
 
 	for (GolTransformBase* parent = orbit->m_parent; parent != NULL; parent = parent->m_parent) {
 		parent->TransformPoint(&position, &transformedPosition);
@@ -496,7 +458,7 @@ void GolCameraBase::UpdateFromTrackedEntity()
 	m_flags |= c_flagViewDirty;
 	transformedForward.m_y = -transformedForward.m_y;
 	transformedForward.m_z = -transformedForward.m_z;
-	m_transform->VTable0x24(&transformedRight, &transformedForward);
+	m_transform->SetDirectionUp(&transformedRight, &transformedForward);
 	m_flags |= c_flagViewDirty;
 }
 

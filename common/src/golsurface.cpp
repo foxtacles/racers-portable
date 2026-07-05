@@ -89,13 +89,6 @@ void GolSurface::FinishPendingFlip()
 	// empty
 }
 
-// FUNCTION: GOLDP 0x100016f0 FOLDED
-// FUNCTION: LEGORACERS 0x0044e7e0 FOLDED
-GolPaletteBase* GolSurface::GetPalette()
-{
-	return NULL;
-}
-
 // FUNCTION: GOLDP 0x1001d030
 // FUNCTION: LEGORACERS 0x004085c0
 void GolSurface::Fill(LegoU32 p_color)
@@ -190,7 +183,7 @@ void GolSurface::Fill(LegoU32 p_color)
 }
 
 // FUNCTION: GOLDP 0x1001d240
-// STUB: LEGORACERS 0x004087d0
+// FUNCTION: LEGORACERS 0x004087d0
 void GolSurface::Blit(LegoU32 p_x, LegoU32 p_y, GolSurface* p_source, Rect* p_sourceRect)
 {
 	LegoU8* destPixels;

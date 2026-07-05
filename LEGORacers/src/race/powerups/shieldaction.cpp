@@ -27,9 +27,7 @@ extern const LegoFloat g_shieldExpireSoundMinDistance;
 
 extern const LegoFloat g_shieldExpireSoundMaxDistance;
 
-extern const LegoFloat g_homingProjectileCollisionStartOffset;
-
-extern const LegoFloat g_violetShoalTwo;
+extern const LegoFloat g_two;
 
 // FUNCTION: LEGORACERS 0x0045bc50
 ShieldAction::ShieldAction()
@@ -114,7 +112,10 @@ void ShieldAction::Activate(
 	m_sound = m_soundSource->AcquireSoundById(soundId);
 	if (m_sound != NULL) {
 		m_sound->Play(TRUE);
-		m_sound->SetDistanceRange(g_shieldSoundMinDistance, g_shieldSoundMaxDistance);
+		m_sound->SetDistanceRangeWithMinSquared(
+			g_shieldExpireSoundMinDistance * g_shieldExpireSoundMinDistance,
+			g_shieldExpireSoundMaxDistance
+		);
 	}
 
 	m_state = c_stateActive;
@@ -239,7 +240,7 @@ void ShieldAction::DrawTransparent(GolD3DRenderDevice* p_renderer)
 	GolVec3 position;
 	m_racer->m_visuals.m_carEntity->GetPosition(&position);
 	LegoFloat positionZ = position.m_z;
-	positionZ += g_violetShoalTwo;
+	positionZ += g_two;
 	position.m_z = positionZ;
 	m_shieldEntity->SetPosition(position);
 
@@ -284,7 +285,7 @@ void ShieldAction::AdvanceState()
 		CarVisuals* racerEntities = &m_racer->m_visuals;
 		racerEntities->m_carEntity->GetPosition(&position);
 		LegoFloat positionZ = position.m_z;
-		positionZ += g_homingProjectileCollisionStartOffset;
+		positionZ += 5.0f;
 		position.m_z = positionZ;
 		m_soundSource->PlaySpatialSoundById(
 			0x3b,
@@ -303,5 +304,5 @@ void ShieldAction::AdvanceState()
 // FUNCTION: LEGORACERS 0x0045c330 FOLDED
 LegoS32 ShieldAction::GetBrickColor()
 {
-	return RacePowerupManager::c_brickColorBlue;
+	return PowerupAction::c_brickColorBlue;
 }

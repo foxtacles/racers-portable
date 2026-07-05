@@ -33,10 +33,13 @@ public:
 
 	MenuSceneView();
 
-	void Reset() override;                                                           // vtable+0x00
-	~MenuSceneView() override;                                                       // vtable+0x04
-	LegoBool32 Destroy() override;                                                   // vtable+0x08
-	MenuWidget* OnCursorEvent(void*, undefined4, undefined4) override;               // vtable+0x2c
+	void Reset() override;         // vtable+0x00
+	~MenuSceneView() override;     // vtable+0x04
+	LegoBool32 Destroy() override; // vtable+0x08
+
+	// FUNCTION: LEGORACERS 0x00466090 FOLDED
+	MenuWidget* OnCursorEvent(void*, undefined4, undefined4) override { return NULL; } // vtable+0x2c
+
 	MenuWidget* OnKeyDown(InputEventQueue::Event*, undefined4, undefined4) override; // vtable+0x30
 	MenuWidget* OnKeyUp(InputEventQueue::Event*, undefined4, undefined4) override;   // vtable+0x34
 	MenuWidget* DrawSelf(Rect*, Rect*) override;                                     // vtable+0x38

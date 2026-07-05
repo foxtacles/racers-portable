@@ -9,9 +9,6 @@ DECOMP_SIZE_ASSERT(HomingProjectile, 0xf8)
 
 extern const LegoFloat g_unk0x004afde0;
 
-// GLOBAL: LEGORACERS 0x004b0170
-extern const LegoFloat g_homingProjectileCollisionStartOffset = 5.0f;
-
 // GLOBAL: LEGORACERS 0x004b0224
 extern const LegoFloat g_homingProjectileTargetHeightOffset = 5.0f;
 
@@ -78,7 +75,7 @@ void HomingProjectile::Destruct()
 	PowerupProjectile::~PowerupProjectile();
 }
 
-// STUB: LEGORACERS 0x00423640
+// FUNCTION: LEGORACERS 0x00423640
 void HomingProjectile::UpdateTargeting(
 	LegoU32 p_elapsedMs,
 	RaceState* p_raceState,
@@ -147,7 +144,7 @@ void HomingProjectile::UpdateTargeting(
 			GolVec3 hit = point;
 			GolVec3 start = point;
 			GolVec3 end = point;
-			start.m_z += g_homingProjectileCollisionStartOffset;
+			start.m_z += 5.0f;
 			end.m_z -= g_homingProjectileCollisionProbeDepth;
 
 			GolBoundingVolume::HitTriangle record;
@@ -197,7 +194,7 @@ void HomingProjectile::StartHoming()
 	}
 }
 
-// STUB: LEGORACERS 0x00423a20
+// FUNCTION: LEGORACERS 0x00423a20
 LegoS32 HomingProjectile::Update(LegoU32 p_elapsedMs)
 {
 	LegoU32 state = m_state;

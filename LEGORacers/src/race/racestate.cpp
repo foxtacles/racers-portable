@@ -31,18 +31,16 @@ extern LegoU16 g_randomTable[1024];
 extern LegoU32 g_randomTableIndex;
 extern LegoFloat g_carBuildPreviewMouseScale;
 extern const LegoFloat g_carBuildModelTextureCoordinateScale;
-extern LegoFloat g_minSoundPan;
 
 DECOMP_SIZE_ASSERT(RaceState, 0x320)
 DECOMP_SIZE_ASSERT(RaceState::RacerProgressEntry, 0x0c)
 DECOMP_SIZE_ASSERT(RaceRoster, 0x194)
-DECOMP_SIZE_ASSERT(RaceSetup, 0x1c)
 
 extern const LegoFloat g_ghostAnimationRateScale;
 extern const LegoFloat g_ghostSampleFractionScale;
 extern const LegoFloat g_sweepCannonRadiansToTableIndex;
 extern const LegoFloat g_negativeRadiansToTableIndex;
-extern const LegoFloat g_violetShoalTwo;
+extern const LegoFloat g_two;
 extern LegoU32 g_silhouetteClearFlag;
 extern LegoU32 g_silhouetteFlattenFlag;
 extern LegoFloat g_cosineTable[1024];
@@ -52,149 +50,17 @@ extern const LegoFloat g_pathMinSegmentLengthSquared;
 
 extern const LegoFloat g_unk0x004b02e0;
 extern const LegoChar* g_racerDatabaseNames[3];
-extern const LegoFloat g_rubberBandScale;
 extern const LegoFloat g_proximityPitchFloor;
 extern const LegoFloat g_proximityPitchBand;
 extern const LegoFloat g_proximityPitchSpeedRange;
 extern const LegoFloat g_carModelScale;
+extern const LegoFloat g_driverModelScale;
 extern const LegoFloat g_proximitySoundMinDistance;
 extern const LegoFloat g_proximitySoundMaxDistance;
+extern LegoFloat g_proximitySoundMaxDistanceSquared;
 
 DECOMP_SIZE_ASSERT(RaceRouteRecord, 0x48)
 DECOMP_SIZE_ASSERT(Racer::StandingsDeltaEntry, 0x0c)
-
-// FUNCTION: LEGORACERS 0x0043a410
-RaceSetup::RaceSetup()
-{
-	Reset();
-}
-
-// FUNCTION: LEGORACERS 0x0043a420
-RaceSetup::~RaceSetup()
-{
-	Destroy();
-}
-
-// FUNCTION: LEGORACERS 0x0043a430
-void RaceSetup::Reset()
-{
-	m_racers = NULL;
-	m_racerCount = 0;
-	m_updateDelayMs = 0;
-	m_rubberBandBoost = 0.0f;
-}
-
-// FUNCTION: LEGORACERS 0x0043a440
-void RaceSetup::Destroy()
-{
-	Reset();
-}
-
-// FUNCTION: LEGORACERS 0x0043a450
-void RaceSetup::Initialize(Racer* p_racers, LegoU32 p_racerCount)
-{
-	if (m_racers) {
-		Destroy();
-	}
-
-	m_racers = p_racers;
-	m_racerCount = p_racerCount;
-	m_updateDelayMs = 15000;
-}
-
-// FUNCTION: LEGORACERS 0x0043a480
-LegoU32 RaceSetup::Update(LegoU32 p_elapsedMs)
-{
-	LegoU32 delayMs = m_updateDelayMs;
-	LegoFloat bestProgress = -1.0f;
-	LegoU32 result;
-
-	if (p_elapsedMs > delayMs) {
-		result = m_racerCount;
-		LegoU32 racerIndex = 0;
-		LegoU32 ignoredState;
-		m_updateDelayMs = 0;
-
-		if (result <= 0) {
-			goto ResetRacerPacing;
-		}
-
-		ignoredState = 2;
-		do {
-			LegoU32 state = m_racers[racerIndex].m_controlMode;
-			if (state != ignoredState && m_racers[racerIndex].GetRaceProgress() > bestProgress) {
-				bestProgress = m_racers[racerIndex].GetRaceProgress();
-			}
-
-			result = m_racerCount;
-			racerIndex++;
-		} while (racerIndex < result);
-
-		if (bestProgress == g_minSoundPan) {
-		ResetRacerPacing:
-			result = m_racerCount;
-			LegoU32 index = 0;
-			if (result > 0) {
-				LegoU32 pushedMask = RacerPhysics::c_flagRoutePushed;
-				do {
-					Racer* racer = &m_racers[index];
-					if (!(racer->m_flags & c_rubberBandFlags)) {
-						LegoU32 physicsFlags = racer->m_physics.m_flags;
-						racer->m_physics.m_routeBaseSpeed = 1.0f;
-						if (!(pushedMask & physicsFlags)) {
-							racer->m_physics.m_routeTargetSpeed = 1.0f;
-						}
-					}
-
-					result = m_racerCount;
-					index++;
-				} while (index < result);
-			}
-		}
-		else {
-			result = m_racerCount;
-			racerIndex = 0;
-			if (result > 0) {
-				LegoU32 pushedMask = RacerPhysics::c_flagRoutePushed;
-				do {
-					if (racerIndex) {
-						if (!(m_racers[racerIndex].m_flags & c_rubberBandFlags)) {
-							if (m_racers[racerIndex].GetRaceProgress() > bestProgress) {
-								LegoFloat adjustment = 1.0f - g_rubberBandScale;
-								adjustment += m_rubberBandBoost;
-								RacerPhysics* physics = &m_racers[racerIndex].m_physics;
-								LegoU32 physicsFlags = physics->m_flags;
-								physics->m_routeBaseSpeed = adjustment;
-								if (!(pushedMask & physicsFlags)) {
-									physics->m_routeTargetSpeed = adjustment;
-								}
-							}
-							else if (m_racers[racerIndex].GetRaceProgress() < bestProgress) {
-								LegoFloat adjustment = g_rubberBandScale + m_rubberBandBoost;
-								adjustment += 1.0f;
-								RacerPhysics* physics = &m_racers[racerIndex].m_physics;
-								LegoU32 physicsFlags = physics->m_flags;
-								physics->m_routeBaseSpeed = adjustment;
-								if (!(pushedMask & physicsFlags)) {
-									physics->m_routeTargetSpeed = adjustment;
-								}
-							}
-						}
-					}
-
-					result = m_racerCount;
-					racerIndex++;
-				} while (racerIndex < result);
-			}
-		}
-	}
-	else {
-		result = delayMs - p_elapsedMs;
-		m_updateDelayMs = result;
-	}
-
-	return result;
-}
 
 // FUNCTION: LEGORACERS 0x0043ae40
 RaceState::RaceState()
@@ -375,7 +241,7 @@ void RaceState::CreateRacers(CreateRacersParams* p_params, RacerContext* p_conte
 	m_setup.Initialize(m_roster.m_racers, m_roster.m_racerCount);
 }
 
-// STUB: LEGORACERS 0x0043b480
+// FUNCTION: LEGORACERS 0x0043b480
 void RaceState::CreateRacer(
 	LegoRacers::Context::PlayerSetupSlot* p_slot,
 	RacerContext* p_context,
@@ -457,8 +323,12 @@ void RaceState::CreateRacer(
 			p_slot->m_altTextures->LoadTextures();
 			p_slot->m_altMaterials->CreateMaterials();
 			initParams.m_driverEntity = m_roster.m_customCarEntities[customIndex];
-			initParams.m_driverEntity
-				->SetModel(p_slot->m_altModel, m_driverTable.m_rootNode, &m_driverTable.m_modelParts, g_carModelScale);
+			initParams.m_driverEntity->SetModel(
+				p_slot->m_altModel,
+				m_driverTable.m_rootNode,
+				&m_driverTable.m_modelParts,
+				g_driverModelScale
+			);
 		}
 
 		chassisItem = static_cast<ChassisModelTable::Item*>(m_chassisTable.GetName(p_slot->m_chassisName));
@@ -766,7 +636,7 @@ void RaceState::UpdateRacers(LegoU32 p_elapsedMs)
 	m_setup.Update(p_elapsedMs);
 }
 
-// STUB: LEGORACERS 0x0043c1b0
+// FUNCTION: LEGORACERS 0x0043c1b0
 void RaceState::UpdateStandings()
 {
 	RaceState::RacerProgressEntry* entries = g_racerProgressEntries;
@@ -892,13 +762,7 @@ void RaceState::UpdateStandings()
 			}
 		}
 
-		if (nearestDistanceSquared >= g_proximitySoundMaxDistance * g_proximitySoundMaxDistance) {
-			if (sound->IsPlaying()) {
-				sound->Stop();
-				return;
-			}
-		}
-		else {
+		if (nearestDistanceSquared < g_proximitySoundMaxDistanceSquared) {
 			if (!sound->IsPlaying()) {
 				sound->Play(TRUE);
 			}
@@ -930,6 +794,9 @@ void RaceState::UpdateStandings()
 			}
 
 			sound->SetFrequencyScale(frequencyScale);
+		}
+		else if (sound->IsPlaying()) {
+			sound->Stop();
 		}
 	}
 }
@@ -1186,7 +1053,7 @@ void RaceState::DrawRacerEntities(GolRenderDevice* p_renderer, Racer* p_racer)
 	}
 }
 
-// STUB: LEGORACERS 0x0043cda0
+// FUNCTION: LEGORACERS 0x0043cda0
 LegoU32 RaceState::GetTimeBehind(Racer* p_racer)
 {
 	TimeRaceManager* timeRaceManager = m_roster.m_timeRaceManager;
@@ -1268,7 +1135,7 @@ LegoU32 RaceState::GetTimeBehind(Racer* p_racer)
 	return result;
 }
 
-// STUB: LEGORACERS 0x0043cf30
+// FUNCTION: LEGORACERS 0x0043cf30
 void RaceState::ComputeStandingsDeltas(Racer* p_racer, Racer::StandingsDeltaEntry* p_entries)
 {
 	LegoU32 lapCount = m_setup.m_lapCount;
@@ -1350,8 +1217,8 @@ void RaceState::ComputeStandingsDeltas(Racer* p_racer, Racer::StandingsDeltaEntr
 // FUNCTION: LEGORACERS 0x0043d070
 RaceRouteRecord* RaceState::FindNearestRouteRecord(Racer* p_racer)
 {
-	LegoFloat nearestDistanceSquared = FLT_MAX;
 	RaceRouteRecord* result = NULL;
+	LegoFloat nearestDistanceSquared = FLT_MAX;
 
 	GolVec3 racerPosition;
 	p_racer->m_visuals.m_carEntity->GetPosition(&racerPosition);
@@ -1376,6 +1243,7 @@ RaceRouteRecord* RaceState::FindNearestRouteRecord(Racer* p_racer)
 
 	return result;
 }
+
 // FUNCTION: LEGORACERS 0x0043d120
 void RaceState::StopProximitySound()
 {

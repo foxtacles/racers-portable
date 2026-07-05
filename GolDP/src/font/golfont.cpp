@@ -20,7 +20,7 @@ DECOMP_SIZE_ASSERT(GolFont, 0xa0)
 // GLOBAL: GOLDP 0x10062568
 static GolImgFile g_fontImgFile;
 
-extern GolSurface* g_fontSourceImage;
+extern GolTexture* g_fontSourceImage;
 
 extern GolTgaFile g_textureTgaFile;
 
@@ -118,7 +118,7 @@ void GolFont::RefreshSurfaces(GolD3DRenderDevice* p_renderer)
 	CopyGlyphsToTextures(p_renderer, &sourceFormat, &textureFormat);
 }
 
-// STUB: GOLDP 0x100047b0
+// FUNCTION: GOLDP 0x100047b0
 void GolFont::CreateSurfaces(GolD3DRenderDevice* p_renderer, GolSurfaceFormat* p_textureFormat)
 {
 	m_textures = new GolD3DTexture[m_surfaceCount];
@@ -137,6 +137,7 @@ void GolFont::CreateSurfaces(GolD3DRenderDevice* p_renderer, GolSurfaceFormat* p
 
 	for (; i < m_surfaceCount - 1; i++) {
 		if (m_flags & c_flagColorKeyed) {
+			texture->SetTextureFlags(GolTexture::c_textureFlagColorKeyed);
 			texture->SetColorKey(m_colorKey);
 		}
 
@@ -170,6 +171,7 @@ void GolFont::CreateSurfaces(GolD3DRenderDevice* p_renderer, GolSurfaceFormat* p
 	material = &m_materials[i];
 
 	if (m_flags & c_flagColorKeyed) {
+		texture->SetTextureFlags(GolTexture::c_textureFlagColorKeyed);
 		texture->SetColorKey(m_colorKey);
 	}
 
@@ -221,7 +223,7 @@ void GolFont::SelectSurface(LegoU32 p_index)
 	m_inverseTextureHeight = 1.0f / static_cast<LegoFloat>(m_textures[index].GetHeight());
 }
 
-// STUB: GOLDP 0x10004c20
+// FUNCTION: GOLDP 0x10004c20
 void GolFont::DrawGlyph(Rect* p_sourceRect, Rect* p_destRect)
 {
 	LegoS32 sourceBottom = p_sourceRect->m_bottom - 1;
