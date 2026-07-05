@@ -394,6 +394,7 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 	DWORD m_deadZone = 0; // DirectInput units, 0..10000
 	LONG m_rangeMin = -1000;
 	LONG m_rangeMax = 1000;
+	int m_nameBudget = 0; // remaining wchars in the game's control-name buffer
 
 	explicit MiniwinInputDevice(Kind p_kind) : m_kind(p_kind) {}
 
@@ -489,13 +490,62 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 		return DI_OK;
 	}
 
+	// The game stores control names in a wchar buffer sized 4*(buttons + 4*axes)
+	// characters and appends without bounds checks (InputDevice::StoreString), so the
+	// combined length of every name we report must stay inside that budget.
+	int NameBudget() const
+	{
+		switch (m_kind) {
+		case Kind::Keyboard:
+			return 4 * 256;
+		case Kind::Mouse:
+			return 4 * (4 + 4 * 3);
+		case Kind::Joystick:
+			return 4 * (16 + 4 * (int) SDL_arraysize(g_joystickAxes));
+		}
+		return 0;
+	}
+
+	bool EmitObject(
+		LPDIENUMDEVICEOBJECTSCALLBACKA p_callback,
+		LPVOID p_ref,
+		const GUID& p_type,
+		DWORD p_offset,
+		const char* p_name
+	)
+	{
+		DIDEVICEOBJECTINSTANCEA object;
+		memset(&object, 0, sizeof(object));
+		object.dwSize = sizeof(object);
+		object.guidType = p_type;
+		object.dwOfs = p_offset;
+
+		int length = (int) SDL_strlen(p_name);
+		if (length + 1 > m_nameBudget) {
+			length = m_nameBudget - 1; // truncated (or empty once exhausted)
+		}
+		if (length > 0) {
+			memcpy(object.tszName, p_name, (size_t) length);
+			m_nameBudget -= length + 1;
+		}
+
+		return p_callback(&object, p_ref) != 0;
+	}
+
 	HRESULT EnumObjects(LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags) override
 	{
 		if (!lpCallback) {
 			return DIERR_GENERIC;
 		}
 
-		DIDEVICEOBJECTINSTANCEA object;
+		// Button and axis enumeration share one name buffer in the game; reset the
+		// budget on the first (button) pass of a device setup.
+		if (dwFlags & DIDFT_BUTTON) {
+			// Two trailing zeros terminate the game's name scan.
+			m_nameBudget = NameBudget() - 2;
+		}
+
+		char name[64];
 
 		if (dwFlags & DIDFT_BUTTON) {
 			switch (m_kind) {
@@ -506,50 +556,30 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 						continue;
 					}
 
-					memset(&object, 0, sizeof(object));
-					object.dwSize = sizeof(object);
-					object.guidType = GUID_Button;
-					object.dwOfs = (DWORD) dik;
-					const char* name = SDL_GetScancodeName(scancode);
-					if (name && name[0]) {
-						SDL_strlcpy(object.tszName, name, sizeof(object.tszName));
+					const char* scancodeName = SDL_GetScancodeName(scancode);
+					if (scancodeName && scancodeName[0]) {
+						SDL_strlcpy(name, scancodeName, sizeof(name));
 					}
 					else {
-						SDL_snprintf(object.tszName, sizeof(object.tszName), "Key %02X", dik);
+						SDL_snprintf(name, sizeof(name), "Key %02X", dik);
 					}
-					if (!lpCallback(&object, pvRef)) {
+					if (!EmitObject(lpCallback, pvRef, GUID_Button, (DWORD) dik, name)) {
 						return DI_OK;
 					}
 				}
 				break;
-			case Kind::Mouse: {
-				static const char* names[4] = {"Left Button", "Right Button", "Middle Button", "Button 4"};
+			case Kind::Mouse:
 				for (int i = 0; i < 4; i++) {
-					memset(&object, 0, sizeof(object));
-					object.dwSize = sizeof(object);
-					object.guidType = GUID_Button;
-					object.dwOfs = DIMOFS_BUTTON0 + i;
-					SDL_strlcpy(object.tszName, names[i], sizeof(object.tszName));
-					if (!lpCallback(&object, pvRef)) {
+					SDL_snprintf(name, sizeof(name), "Button %d", i);
+					if (!EmitObject(lpCallback, pvRef, GUID_Button, DIMOFS_BUTTON0 + i, name)) {
 						return DI_OK;
 					}
 				}
 				break;
-			}
 			case Kind::Joystick:
 				for (int i = 0; i < 16; i++) {
-					memset(&object, 0, sizeof(object));
-					object.dwSize = sizeof(object);
-					object.guidType = GUID_Button;
-					object.dwOfs = DIJOFS_BUTTON(i);
-					const char* name = SDL_GetGamepadStringForButton((SDL_GamepadButton) i);
-					if (name && name[0]) {
-						SDL_strlcpy(object.tszName, name, sizeof(object.tszName));
-					}
-					else {
-						SDL_snprintf(object.tszName, sizeof(object.tszName), "Button %d", i);
-					}
-					if (!lpCallback(&object, pvRef)) {
+					SDL_snprintf(name, sizeof(name), "Btn %d", i);
+					if (!EmitObject(lpCallback, pvRef, GUID_Button, DIJOFS_BUTTON(i), name)) {
 						return DI_OK;
 					}
 				}
@@ -567,17 +597,12 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 					DWORD m_offset;
 					const char* m_name;
 				} axes[] = {
-					{&GUID_XAxis, DIMOFS_X, "X Axis"},
-					{&GUID_YAxis, DIMOFS_Y, "Y Axis"},
+					{&GUID_XAxis, DIMOFS_X, "X-axis"},
+					{&GUID_YAxis, DIMOFS_Y, "Y-axis"},
 					{&GUID_ZAxis, DIMOFS_Z, "Wheel"},
 				};
 				for (size_t i = 0; i < SDL_arraysize(axes); i++) {
-					memset(&object, 0, sizeof(object));
-					object.dwSize = sizeof(object);
-					object.guidType = *axes[i].m_guid;
-					object.dwOfs = axes[i].m_offset;
-					SDL_strlcpy(object.tszName, axes[i].m_name, sizeof(object.tszName));
-					if (!lpCallback(&object, pvRef)) {
+					if (!EmitObject(lpCallback, pvRef, *axes[i].m_guid, axes[i].m_offset, axes[i].m_name)) {
 						return DI_OK;
 					}
 				}
@@ -585,12 +610,13 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 			}
 			case Kind::Joystick:
 				for (size_t i = 0; i < SDL_arraysize(g_joystickAxes); i++) {
-					memset(&object, 0, sizeof(object));
-					object.dwSize = sizeof(object);
-					object.guidType = *g_joystickAxes[i].m_guid;
-					object.dwOfs = g_joystickAxes[i].m_offset;
-					SDL_strlcpy(object.tszName, g_joystickAxes[i].m_name, sizeof(object.tszName));
-					if (!lpCallback(&object, pvRef)) {
+					if (!EmitObject(
+							lpCallback,
+							pvRef,
+							*g_joystickAxes[i].m_guid,
+							g_joystickAxes[i].m_offset,
+							g_joystickAxes[i].m_name
+						)) {
 						return DI_OK;
 					}
 				}
