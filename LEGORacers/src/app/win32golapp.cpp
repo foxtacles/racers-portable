@@ -75,6 +75,9 @@ void Win32GolApp::Initialize(const LegoChar* p_windowName, const LegoChar* p_fil
 		window = SDL_CreateWindow(title, 640, 480, SDL_WINDOW_HIDDEN | backendFlags);
 		if (window) {
 			SDL_StartTextInput(window);
+			// The original hid the Win32 cursor over the client area (WM_SETCURSOR
+			// with a NULL class cursor); the game draws its own pointer.
+			SDL_HideCursor();
 		}
 	});
 
@@ -374,78 +377,96 @@ LegoS32 Win32GolApp::Tick(GolAppEventHandler* p_eventHandler)
 	// thread) are dispatched to the same GolAppEventHandler notifications the Win32
 	// window procedure produced.
 	SDL_Event event;
-	while (MiniwinApp_PollEvent(event)) {
-		MiniwinInput_HandleEvent(event);
-
-		switch (event.type) {
-		case SDL_EVENT_QUIT:
-			// WM_QUIT equivalent.
-			m_eventHandler = 0;
-			return 0;
-		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-			NotifyCloseRequested();
-			break;
-		case SDL_EVENT_TEXT_INPUT:
-			if (m_eventHandler && event.text.text) {
-				for (const char* c = event.text.text; *c; c++) {
-					m_eventHandler->OnChar((undefined4) (unsigned char) *c);
-					m_eventHandler->VTable0x20((undefined4) (unsigned char) *c);
-				}
-			}
-			break;
-		case SDL_EVENT_KEY_DOWN:
-			// WM_CHAR carried control characters; SDL text input does not, so
-			// synthesize the ones the game's text fields react to.
-			if (event.key.key == SDLK_RETURN && (event.key.mod & SDL_KMOD_ALT)) {
+	static bool suppressReturnUp;
+	do {
+		while (MiniwinApp_PollEvent(event)) {
+			// Alt+Enter toggles fullscreen and must not leak into the game's input
+			// layer (Enter doubles as the menu click).
+			if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_RETURN && (event.key.mod & SDL_KMOD_ALT)) {
 				ToggleFullscreen();
+				suppressReturnUp = true;
+				continue;
 			}
-			else if (m_eventHandler) {
-				undefined4 ch = 0;
-				if (event.key.key == SDLK_RETURN) {
-					ch = '\r';
-				}
-				else if (event.key.key == SDLK_BACKSPACE) {
-					ch = '\b';
-				}
-				else if (event.key.key == SDLK_ESCAPE) {
-					ch = 0x1b;
-				}
-				if (ch) {
-					m_eventHandler->OnChar(ch);
-					m_eventHandler->VTable0x20(ch);
-				}
+			if (suppressReturnUp && event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_RETURN) {
+				suppressReturnUp = false;
+				continue;
 			}
-			break;
-		case SDL_EVENT_WINDOW_FOCUS_LOST:
-			// WM_ACTIVATEAPP(FALSE) equivalent.
-			if ((m_flags & c_flagDisplayActive) && !m_disabled) {
-				OutputDebugString("Deactivate App\n");
-				OnAppDeactivated();
+
+			MiniwinInput_HandleEvent(event);
+
+			switch (event.type) {
+			case SDL_EVENT_QUIT:
+				// WM_QUIT equivalent.
+				m_eventHandler = 0;
+				return 0;
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				NotifyCloseRequested();
+				break;
+			case SDL_EVENT_TEXT_INPUT:
+				if (m_eventHandler && event.text.text) {
+					for (const char* c = event.text.text; *c; c++) {
+						m_eventHandler->OnChar((undefined4) (unsigned char) *c);
+						m_eventHandler->VTable0x20((undefined4) (unsigned char) *c);
+					}
+				}
+				break;
+			case SDL_EVENT_KEY_DOWN:
+				// WM_CHAR carried control characters; SDL text input does not, so
+				// synthesize the ones the game's text fields react to.
 				if (m_eventHandler) {
-					m_eventHandler->OnAppDeactivated();
+					undefined4 ch = 0;
+					if (event.key.key == SDLK_RETURN) {
+						ch = '\r';
+					}
+					else if (event.key.key == SDLK_BACKSPACE) {
+						ch = '\b';
+					}
+					else if (event.key.key == SDLK_ESCAPE) {
+						ch = 0x1b;
+					}
+					if (ch) {
+						m_eventHandler->OnChar(ch);
+						m_eventHandler->VTable0x20(ch);
+					}
 				}
-				m_disabled = TRUE;
-				m_pollInput = 0;
-				m_inputManager.SuspendActiveDevices();
-			}
-			break;
-		case SDL_EVENT_WINDOW_FOCUS_GAINED:
-			// WM_ACTIVATEAPP(TRUE) / WM_SIZE(SIZE_RESTORED) equivalent.
-			if ((m_flags & c_flagDisplayActive) && m_disabled) {
-				OutputDebugString("Activate App\n");
-				OnAppActivated();
-				m_disabled = FALSE;
-				m_pollInput = 1;
-				m_inputManager.RestoreSuspendedDevices();
-				if (m_eventHandler) {
-					m_eventHandler->OnAppActivated();
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+				// WM_ACTIVATEAPP(FALSE) equivalent.
+				if ((m_flags & c_flagDisplayActive) && !m_disabled) {
+					OutputDebugString("Deactivate App\n");
+					OnAppDeactivated();
+					if (m_eventHandler) {
+						m_eventHandler->OnAppDeactivated();
+					}
+					m_disabled = TRUE;
+					m_pollInput = 0;
+					m_inputManager.SuspendActiveDevices();
 				}
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
+				// WM_ACTIVATEAPP(TRUE) / WM_SIZE(SIZE_RESTORED) equivalent.
+				if ((m_flags & c_flagDisplayActive) && m_disabled) {
+					OutputDebugString("Activate App\n");
+					OnAppActivated();
+					m_disabled = FALSE;
+					m_pollInput = 1;
+					m_inputManager.RestoreSuspendedDevices();
+					if (m_eventHandler) {
+						m_eventHandler->OnAppActivated();
+					}
+				}
+				break;
+			default:
+				break;
 			}
-			break;
-		default:
-			break;
 		}
-	}
+
+		// The original minimized and idled while deactivated; sleep here so the whole
+		// game (race clock included) pauses until focus returns.
+		if (m_disabled) {
+			Sleep(50);
+		}
+	} while (m_disabled);
 
 	DWORD time = timeGetTime();
 	m_frameDeltaMs = time - m_lastFrameTimeMs;
