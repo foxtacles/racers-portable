@@ -246,6 +246,9 @@ void Win32GolApp_ApplyWindowMode(HWND p_hWnd, LegoBool32 p_fullscreen, LegoU32 p
 		if (p_fullscreen) {
 			SDL_SetWindowSize(window, (int) p_width, (int) p_height);
 			SDL_SetWindowFullscreen(window, true);
+			// Wait out the fullscreen transition so no frames present at the old
+			// windowed size (they showed up as a flash in the corner).
+			SDL_SyncWindow(window);
 		}
 		else {
 			SDL_SetWindowFullscreen(window, false);
@@ -447,6 +450,7 @@ LegoS32 Win32GolApp::Tick(GolAppEventHandler* p_eventHandler)
 					m_disabled = TRUE;
 					m_pollInput = 0;
 					m_inputManager.SuspendActiveDevices();
+					MiniwinSound_SetSuspended(true);
 				}
 				break;
 			case SDL_EVENT_WINDOW_FOCUS_GAINED:
@@ -457,6 +461,7 @@ LegoS32 Win32GolApp::Tick(GolAppEventHandler* p_eventHandler)
 					m_disabled = FALSE;
 					m_pollInput = 1;
 					m_inputManager.RestoreSuspendedDevices();
+					MiniwinSound_SetSuspended(false);
 					if (m_eventHandler) {
 						m_eventHandler->OnAppActivated();
 					}

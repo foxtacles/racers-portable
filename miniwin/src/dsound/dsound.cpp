@@ -17,6 +17,21 @@ static const DWORD c_engineChannels = 2;
 
 static ma_engine g_engine;
 static SDL_AudioStream* g_stream;
+
+// The original's DirectSound buffers lacked DSBCAPS_GLOBALFOCUS, so audio muted
+// whenever the app lost focus; the window layer mirrors that through this hook.
+void MiniwinSound_SetSuspended(bool p_suspended)
+{
+	if (!g_stream) {
+		return;
+	}
+	if (p_suspended) {
+		SDL_PauseAudioStreamDevice(g_stream);
+	}
+	else {
+		SDL_ResumeAudioStreamDevice(g_stream);
+	}
+}
 static bool g_engineReady;
 
 static void SDLCALL PullAudio(void* p_userdata, SDL_AudioStream* p_stream, int p_additionalAmount, int p_totalAmount)

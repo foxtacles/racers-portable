@@ -44,6 +44,10 @@ enum MiniwinRenderResolution {
 	MINIWIN_RESOLUTION_ORIGINAL = 1,
 };
 void MiniwinSetRenderResolution(MiniwinRenderResolution p_resolution);
+
+// Mutes/unmutes the DirectSound emulation (used while the app is deactivated, like
+// the original's non-GLOBALFOCUS DirectSound buffers behaved).
+void MiniwinSound_SetSuspended(bool p_suspended);
 MiniwinRenderResolution MiniwinGetRenderResolution();
 
 // Configures SDL window attributes required by the render backend; returns extra
