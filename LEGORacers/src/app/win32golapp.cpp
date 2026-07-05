@@ -30,6 +30,9 @@ static SDL_Window* AppWindow(HWND p_hWnd)
 	return reinterpret_cast<SDL_Window*>(p_hWnd);
 }
 
+// Alt+Enter handling swallows the Enter release that follows the toggle.
+static bool g_suppressReturnUp;
+
 // FUNCTION: LEGORACERS 0x004164d0
 Win32GolApp::Win32GolApp()
 {
@@ -235,7 +238,7 @@ void Win32GolApp::InitializeDisplayWithDevice(
 }
 
 // Applies the current windowed/fullscreen state to the SDL window.
-void Win32GolApp_ApplyWindowMode(HWND p_hWnd, LegoBool32 p_fullscreen, LegoU32 p_width, LegoU32 p_height)
+static void ApplyWindowMode(HWND p_hWnd, LegoBool32 p_fullscreen, LegoU32 p_width, LegoU32 p_height)
 {
 	SDL_Window* window = AppWindow(p_hWnd);
 	if (!window) {
@@ -286,12 +289,12 @@ LegoS32 Win32GolApp::InitializeDisplay(LegoU32 p_width, LegoU32 p_height, LegoU3
 
 	if (!(m_flags & c_flagFullscreen)) {
 		m_windowMode = c_windowModeWindowed;
-		Win32GolApp_ApplyWindowMode(m_hWnd, FALSE, p_width, p_height);
+		ApplyWindowMode(m_hWnd, FALSE, p_width, p_height);
 	}
 	else {
 		m_windowMode = c_windowModeFullscreen;
 		GetInputManager()->GetMouse()->SetNonExclusiveMode();
-		Win32GolApp_ApplyWindowMode(m_hWnd, TRUE, p_width, p_height);
+		ApplyWindowMode(m_hWnd, TRUE, p_width, p_height);
 	}
 
 	m_windowStateChanging = FALSE;
@@ -383,18 +386,17 @@ LegoS32 Win32GolApp::Tick(GolAppEventHandler* p_eventHandler)
 	// thread) are dispatched to the same GolAppEventHandler notifications the Win32
 	// window procedure produced.
 	SDL_Event event;
-	static bool suppressReturnUp;
 	do {
 		while (MiniwinApp_PollEvent(event)) {
 			// Alt+Enter toggles fullscreen and must not leak into the game's input
 			// layer (Enter doubles as the menu click).
 			if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_RETURN && (event.key.mod & SDL_KMOD_ALT)) {
 				ToggleFullscreen();
-				suppressReturnUp = true;
+				g_suppressReturnUp = true;
 				continue;
 			}
-			if (suppressReturnUp && event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_RETURN) {
-				suppressReturnUp = false;
+			if (g_suppressReturnUp && event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_RETURN) {
+				g_suppressReturnUp = false;
 				continue;
 			}
 
@@ -538,12 +540,12 @@ void Win32GolApp::ChangeWindowState(LegoU32 p_mode)
 			m_flags |= c_flagFullscreen;
 			m_windowMode = c_windowModeFullscreen;
 			GetInputManager()->GetMouse()->SetNonExclusiveMode();
-			Win32GolApp_ApplyWindowMode(m_hWnd, TRUE, m_width, m_height);
+			ApplyWindowMode(m_hWnd, TRUE, m_width, m_height);
 		}
 		else {
 			m_flags &= ~c_flagFullscreen;
 			m_windowMode = c_windowModeWindowed;
-			Win32GolApp_ApplyWindowMode(m_hWnd, FALSE, m_width, m_height);
+			ApplyWindowMode(m_hWnd, FALSE, m_width, m_height);
 		}
 
 		if (m_eventHandler) {
@@ -556,7 +558,7 @@ void Win32GolApp::ChangeWindowState(LegoU32 p_mode)
 		LegoU32 fullscreenFlags = drawFlags | (GolDrawState::c_flagHardwareDevice | GolDrawState::c_flagBit10);
 		m_windowMode = c_windowModeFullscreen;
 		GetInputManager()->GetMouse()->SetNonExclusiveMode();
-		Win32GolApp_ApplyWindowMode(m_hWnd, TRUE, m_width, m_height);
+		ApplyWindowMode(m_hWnd, TRUE, m_width, m_height);
 
 		m_golDrawState->CreateDisplay(m_width, m_height, m_bpp, fullscreenFlags);
 
