@@ -131,13 +131,11 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		state.textureWrap = m_textureStageStates[0][D3DTSS_ADDRESS] != D3DTADDRESS_CLAMP;
 
 		// Color keying: keyed texels were converted to alpha 0 at upload; reject them
-		// at rasterization like the D3D6 colorkey path did.
-		if (state.textured && !state.alphaTest && m_renderStates[D3DRENDERSTATE_COLORKEYENABLE] &&
-			m_texture->m_hasColorKey) {
-			state.alphaTest = true;
-			state.alphaFunc = D3DCMP_GREATEREQUAL;
-			state.alphaRef = 0.5f;
-		}
+		// based on the sampled texture alpha alone, like the D3D6 texel-level colorkey
+		// did. Gating on the combined alpha instead would erase whole draws whose
+		// vertex alpha fades below the threshold (e.g. the magnet's sparkle column).
+		state.colorKeyTest = state.textured && m_renderStates[D3DRENDERSTATE_COLORKEYENABLE] &&
+							 m_texture->m_hasColorKey;
 
 		return state;
 	}

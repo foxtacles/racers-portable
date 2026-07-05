@@ -32,6 +32,7 @@ struct MiniwinRasterState {
 	Uint32 textureId = 0;
 	bool textureLinear = true;
 	bool textureWrap = true;
+	bool colorKeyTest = false;
 	MiniwinTextureOp colorOp = MiniwinTextureOp::Modulate;
 	MiniwinTextureOp alphaOp = MiniwinTextureOp::Modulate;
 };

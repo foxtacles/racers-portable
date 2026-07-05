@@ -45,6 +45,7 @@ uniform int uAlphaOp;  // same encoding for the alpha channel
 uniform int uSpecular; // D3DRENDERSTATE_SPECULARENABLE
 uniform int uAlphaFunc; // D3DCMPFUNC or 0 = disabled
 uniform float uAlphaRef;
+uniform int uColorKey; // discard fragments whose sampled texture alpha is keyed out
 
 out vec4 oColor;
 
@@ -53,6 +54,10 @@ void main()
 	vec4 sampled = vec4(1.0);
 	if (uColorOp != 2 || uAlphaOp != 2) {
 		sampled = texture(uTexture, vUV);
+	}
+
+	if (uColorKey != 0 && sampled.a < 0.5) {
+		discard;
 	}
 
 	vec4 color;
@@ -121,6 +126,7 @@ private:
 	GLint m_uAlphaOp = -1;
 	GLint m_uSpecular = -1;
 	GLint m_uAlphaFunc = -1;
+	GLint m_uColorKey = -1;
 	GLint m_uAlphaRef = -1;
 	Uint64 m_frameCounter = 0;
 	Uint32 m_statDraws = 0;
@@ -220,6 +226,7 @@ bool MiniwinGl3Backend::Init(SDL_Window* p_window)
 	m_uAlphaOp = gl.glGetUniformLocation(m_program, "uAlphaOp");
 	m_uSpecular = gl.glGetUniformLocation(m_program, "uSpecular");
 	m_uAlphaFunc = gl.glGetUniformLocation(m_program, "uAlphaFunc");
+	m_uColorKey = gl.glGetUniformLocation(m_program, "uColorKey");
 	m_uAlphaRef = gl.glGetUniformLocation(m_program, "uAlphaRef");
 
 	gl.glGenVertexArrays(1, &m_vao);
@@ -435,6 +442,7 @@ void MiniwinGl3Backend::ApplyState(const MiniwinRasterState& p_state)
 	gl.glUniform1i(m_uSpecular, p_state.specular ? 1 : 0);
 	gl.glUniform1i(m_uAlphaFunc, p_state.alphaTest ? (int) p_state.alphaFunc : 0);
 	gl.glUniform1f(m_uAlphaRef, p_state.alphaRef);
+	gl.glUniform1i(m_uColorKey, p_state.colorKeyTest ? 1 : 0);
 
 	if (p_state.textured) {
 		gl.glBindTexture(GL_TEXTURE_2D, p_state.textureId);
