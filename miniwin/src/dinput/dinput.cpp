@@ -15,6 +15,19 @@ struct MiniwinInputDevice : public IDirectInputDevice2A {
 
 	explicit MiniwinInputDevice(Kind p_kind) : m_kind(p_kind) {}
 
+	HRESULT QueryInterface(REFIID riid, void** ppvObject) override
+	{
+		if (ppvObject && riid == IID_IDirectInputDevice2A) {
+			AddRef();
+			*ppvObject = this;
+			return DI_OK;
+		}
+		if (ppvObject) {
+			*ppvObject = nullptr;
+		}
+		return E_NOINTERFACE;
+	}
+
 	HRESULT GetDeviceInfo(LPDIDEVICEINSTANCEA pdidi) override
 	{
 		if (!pdidi) {
