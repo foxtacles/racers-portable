@@ -49,6 +49,7 @@ LegoS32 CircuitRaceRunner::Initialize(LegoRacers::Context* p_context, RaceSessio
 	m_context = p_context;
 	m_session = p_session;
 	sprintf(p_context->m_commonDataDirectory, "GAMEDATA\\COMMON");
+	// 64-bit compatibility: the original returns the raw pointer as its status.
 	return m_standings.SetContext(m_context) != NULL;
 }
 
