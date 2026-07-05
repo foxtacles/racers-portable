@@ -40,7 +40,8 @@ in vec4 vSpecular;
 in vec2 vUV;
 
 uniform sampler2D uTexture;
-uniform int uTextured;
+uniform int uColorOp;  // 0 = texture * diffuse, 1 = texture, 2 = diffuse
+uniform int uAlphaOp;  // same encoding for the alpha channel
 uniform int uSpecular; // D3DRENDERSTATE_SPECULARENABLE
 uniform int uAlphaFunc; // D3DCMPFUNC or 0 = disabled
 uniform float uAlphaRef;
@@ -49,10 +50,15 @@ out vec4 oColor;
 
 void main()
 {
-	vec4 color = vColor;
-	if (uTextured != 0) {
-		color *= texture(uTexture, vUV);
+	vec4 sampled = vec4(1.0);
+	if (uColorOp != 2 || uAlphaOp != 2) {
+		sampled = texture(uTexture, vUV);
 	}
+
+	vec4 color;
+	color.rgb = uColorOp == 0 ? vColor.rgb * sampled.rgb : (uColorOp == 1 ? sampled.rgb : vColor.rgb);
+	color.a = uAlphaOp == 0 ? vColor.a * sampled.a : (uAlphaOp == 1 ? sampled.a : vColor.a);
+
 	if (uSpecular != 0) {
 		color.rgb += vSpecular.rgb;
 	}
@@ -111,7 +117,8 @@ private:
 	GLuint m_vbo = 0;
 	GLuint m_ebo = 0;
 	GLint m_uViewport = -1;
-	GLint m_uTextured = -1;
+	GLint m_uColorOp = -1;
+	GLint m_uAlphaOp = -1;
 	GLint m_uSpecular = -1;
 	GLint m_uAlphaFunc = -1;
 	GLint m_uAlphaRef = -1;
@@ -209,7 +216,8 @@ bool MiniwinGl3Backend::Init(SDL_Window* p_window)
 	gl.glDeleteShader(fs);
 
 	m_uViewport = gl.glGetUniformLocation(m_program, "uViewport");
-	m_uTextured = gl.glGetUniformLocation(m_program, "uTextured");
+	m_uColorOp = gl.glGetUniformLocation(m_program, "uColorOp");
+	m_uAlphaOp = gl.glGetUniformLocation(m_program, "uAlphaOp");
 	m_uSpecular = gl.glGetUniformLocation(m_program, "uSpecular");
 	m_uAlphaFunc = gl.glGetUniformLocation(m_program, "uAlphaFunc");
 	m_uAlphaRef = gl.glGetUniformLocation(m_program, "uAlphaRef");
@@ -273,14 +281,9 @@ Uint32 MiniwinGl3Backend::CreateTexture(int p_width, int p_height, const void* p
 void MiniwinGl3Backend::UpdateTexture(Uint32 p_id, int p_width, int p_height, const void* p_rgba, bool p_mipmaps)
 {
 	static const char* dumpDir = getenv("RACERS_DUMP_TEX");
-	if (dumpDir && p_id <= 32) {
-		SDL_Surface* surface = SDL_CreateSurfaceFrom(
-			p_width,
-			p_height,
-			SDL_PIXELFORMAT_RGBA32,
-			const_cast<void*>(p_rgba),
-			p_width * 4
-		);
+	if (dumpDir && p_id <= 64) {
+		SDL_Surface* surface =
+			SDL_CreateSurfaceFrom(p_width, p_height, SDL_PIXELFORMAT_RGBA32, const_cast<void*>(p_rgba), p_width * 4);
 		if (surface) {
 			char path[512];
 			SDL_snprintf(path, sizeof(path), "%s/tex%02u_%dx%d.bmp", dumpDir, (unsigned) p_id, p_width, p_height);
@@ -427,7 +430,8 @@ void MiniwinGl3Backend::ApplyState(const MiniwinRasterState& p_state)
 		gl.glFrontFace(p_state.cullMode == D3DCULL_CW ? GL_CW : GL_CCW);
 	}
 
-	gl.glUniform1i(m_uTextured, p_state.textured ? 1 : 0);
+	gl.glUniform1i(m_uColorOp, (int) p_state.colorOp);
+	gl.glUniform1i(m_uAlphaOp, (int) p_state.alphaOp);
 	gl.glUniform1i(m_uSpecular, p_state.specular ? 1 : 0);
 	gl.glUniform1i(m_uAlphaFunc, p_state.alphaTest ? (int) p_state.alphaFunc : 0);
 	gl.glUniform1f(m_uAlphaRef, p_state.alphaRef);
@@ -487,12 +491,13 @@ void MiniwinGl3Backend::DrawTriangles(
 		}
 		SDL_LogInfo(
 			LOG_CATEGORY_MINIWIN,
-			"trace draw: vtx=%u idx=%u tex=%u(%s) blend=%d(%d,%d) atest=%d z=%d zw=%d cull=%d "
+			"trace draw: vtx=%u idx=%u tex=%u(c%da%d) blend=%d(%d,%d) atest=%d z=%d zw=%d cull=%d "
 			"x[%.1f..%.1f] y[%.1f..%.1f] z[%.3f..%.3f] rhw0=%.4f c0=%08x c1=%08x uv0=(%.2f,%.2f)",
 			p_vertexCount,
 			p_indices ? p_indexCount : 0,
 			p_state.textureId,
-			p_state.textured ? "on" : "off",
+			(int) p_state.colorOp,
+			(int) p_state.alphaOp,
 			(int) p_state.alphaBlend,
 			(int) p_state.srcBlend,
 			(int) p_state.destBlend,

@@ -7,6 +7,14 @@
 #include <SDL3/SDL.h>
 #include <miniwin/d3d.h>
 
+// How a channel combines the texture sample with the vertex diffuse color
+// (D3DTSS_COLOROP/ALPHAOP reduced to the three ops the game uses).
+enum class MiniwinTextureOp : Uint8 {
+	Modulate = 0, // texture * diffuse (D3DTOP_MODULATE)
+	Texture = 1,  // texture only (D3DTOP_SELECTARG1)
+	Diffuse = 2,  // diffuse only (D3DTOP_SELECTARG2 / no texture bound)
+};
+
 // Snapshot of the D3D render states a draw call depends on.
 struct MiniwinRasterState {
 	bool zEnable = true;
@@ -24,6 +32,8 @@ struct MiniwinRasterState {
 	Uint32 textureId = 0;
 	bool textureLinear = true;
 	bool textureWrap = true;
+	MiniwinTextureOp colorOp = MiniwinTextureOp::Modulate;
+	MiniwinTextureOp alphaOp = MiniwinTextureOp::Modulate;
 };
 
 class MiniwinRenderBackend {

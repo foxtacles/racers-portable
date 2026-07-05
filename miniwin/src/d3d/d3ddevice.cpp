@@ -52,6 +52,12 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		}
 
 		bool mipmaps = (p_surface->m_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != 0;
+		if (p_surface->m_backendTexture == 0) {
+			p_surface->m_backendTexture = backend->CreateTexture(width, height, m_convertScratch.data(), mipmaps);
+		}
+		else {
+			backend->UpdateTexture(p_surface->m_backendTexture, width, height, m_convertScratch.data(), mipmaps);
+		}
 		if (getenv("RACERS_DUMP_TEX")) {
 			SDL_LogInfo(
 				LOG_CATEGORY_MINIWIN,
@@ -66,12 +72,6 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 				(unsigned) p_surface->m_colorKey.dwColorSpaceLowValue,
 				p_surface->m_palette != nullptr
 			);
-		}
-		if (p_surface->m_backendTexture == 0) {
-			p_surface->m_backendTexture = backend->CreateTexture(width, height, m_convertScratch.data(), mipmaps);
-		}
-		else {
-			backend->UpdateTexture(p_surface->m_backendTexture, width, height, m_convertScratch.data(), mipmaps);
 		}
 
 		p_surface->m_textureDirty = false;
@@ -110,10 +110,22 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		}
 		state.specular = m_renderStates[D3DRENDERSTATE_SPECULARENABLE] != 0;
 
-		state.textured = m_texture != nullptr;
+		// The game switches D3DTSS_COLOROP/ALPHAOP between MODULATE, SELECTARG1
+		// (texture only) and SELECTARG2 (diffuse only) per material — and leaves the
+		// previous texture bound for untextured materials, so the ops decide whether
+		// the sample participates at all.
+		state.colorOp = TextureOpFromStageState(m_textureStageStates[0][D3DTSS_COLOROP]);
+		state.alphaOp = TextureOpFromStageState(m_textureStageStates[0][D3DTSS_ALPHAOP]);
+
+		bool usesTexture = state.colorOp != MiniwinTextureOp::Diffuse || state.alphaOp != MiniwinTextureOp::Diffuse;
+		state.textured = m_texture != nullptr && usesTexture;
 		if (state.textured) {
 			state.textureId = EnsureTexture(m_texture);
 			state.textured = state.textureId != 0;
+		}
+		if (!state.textured) {
+			state.colorOp = MiniwinTextureOp::Diffuse;
+			state.alphaOp = MiniwinTextureOp::Diffuse;
 		}
 		state.textureLinear = m_textureStageStates[0][D3DTSS_MAGFILTER] != D3DTFG_POINT;
 		state.textureWrap = m_textureStageStates[0][D3DTSS_ADDRESS] != D3DTADDRESS_CLAMP;
@@ -128,6 +140,20 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		}
 
 		return state;
+	}
+
+	static MiniwinTextureOp TextureOpFromStageState(DWORD p_op)
+	{
+		switch (p_op) {
+		case D3DTOP_SELECTARG1:
+			return MiniwinTextureOp::Texture;
+		case D3DTOP_SELECTARG2:
+		case D3DTOP_DISABLE:
+			return MiniwinTextureOp::Diffuse;
+		case D3DTOP_MODULATE:
+		default:
+			return MiniwinTextureOp::Modulate;
+		}
 	}
 
 	MiniwinSurface* m_renderTarget;
