@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang-format:
+    name: 'clang-format'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format
+        run: |
+          find LEGORacers GolDP common util miniwin 3rdparty/ffmpeg-indeo5/indeo5dec.c 3rdparty/ffmpeg-indeo5/indeo5dec.h \
+            -iname '*.h' -o -iname '*.cpp' | \
+            grep -v '3rdparty/ffmpeg-indeo5/shim' | xargs \
+          pipx run "clang-format>=17,<18" \
+            --style=file \
+            -i
+      - name: Check diff
+        run: |
+          git diff --exit-code
+
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: sh
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: 'Linux',      os: 'ubuntu-latest',  generator: 'Ninja' , linux: true }
+          - { name: 'MSVC (x64)', os: 'windows-latest', generator: 'Ninja' , msvc: true, vc-arch: 'amd64' }
+          - { name: 'macOS',      os: 'macos-latest',   generator: 'Ninja' , brew: true }
+
+    steps:
+      - name: Setup vcvars
+        if: ${{ !!matrix.msvc }}
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.vc-arch }}
+
+      - name: Setup ninja
+        if: ${{ !!matrix.msvc }}
+        uses: ashutoshvarma/setup-ninja@master
+
+      - name: Install Linux dependencies (apt-get)
+        if: ${{ matrix.linux }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build \
+            libx11-dev libxext-dev libxrandr-dev libxrender-dev libxfixes-dev libxi-dev libxinerama-dev \
+            libxcursor-dev libwayland-dev libxkbcommon-dev wayland-protocols libgl1-mesa-dev \
+            libasound2-dev libpulse-dev libxss-dev libxtst-dev
+
+      - name: Install macOS dependencies (brew)
+        if: ${{ matrix.brew }}
+        run: |
+          brew update
+          brew install cmake ninja || true
+
+      - uses: actions/checkout@v4
+
+      - name: Configure (CMake)
+        run: |
+          cmake -S . -B build -G "${{ matrix.generator }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DDOWNLOAD_DEPENDENCIES=ON \
+            -Werror=dev
+
+      - name: Build (CMake)
+        run: cmake --build build --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: legoracers-${{ matrix.name }}
+          path: |
+            build/LEGORacers*
+            !build/LEGORacers*.dir
