@@ -9,6 +9,7 @@
 
 #include "video/videoplayer.h"
 
+#include "app/main.h"
 #include "compat.h"
 #include "decomp.h"
 #include "video/avireader.h"
@@ -175,6 +176,21 @@ bool OpenIndeo5Avi(AviReader& p_reader, const char* p_filename)
 
 } // namespace
 
+extern CommandLineArgs g_commandLineArgs;
+
+// The movies run before the game decides its display mode; mirror the intent the
+// game will apply afterwards (fullscreen unless -window was given) so fullscreen
+// launches do not play the intros in a window first.
+static bool WantsFullscreen()
+{
+	for (LegoS32 i = 0; i < g_commandLineArgs.m_argc; i++) {
+		if (g_commandLineArgs.m_argv[i] && strcmp(g_commandLineArgs.m_argv[i], "-window") == 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
 int VideoPlayer::Begin(Win32GolApp* p_golApp, DWORD p_width, DWORD p_height)
 {
 	SDL_Window* window = reinterpret_cast<SDL_Window*>(p_golApp->GetHwnd());
@@ -182,9 +198,15 @@ int VideoPlayer::Begin(Win32GolApp* p_golApp, DWORD p_width, DWORD p_height)
 		return 0;
 	}
 
-	MiniwinApp_RunOnMainThread([window, p_width, p_height]() {
-		SDL_SetWindowSize(window, (int) p_width, (int) p_height);
-		SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	bool fullscreen = WantsFullscreen();
+	MiniwinApp_RunOnMainThread([window, p_width, p_height, fullscreen]() {
+		if (fullscreen) {
+			SDL_SetWindowFullscreen(window, true);
+		}
+		else {
+			SDL_SetWindowSize(window, (int) p_width, (int) p_height);
+			SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		}
 		SDL_ShowWindow(window);
 	});
 
@@ -394,12 +416,16 @@ int VideoPlayer::Play(Win32GolApp* p_golApp, LPCSTR p_filename, int p_abortableO
 		gl.glDrawArrays(c_glTriangleStrip, 0, 4);
 		SDL_GL_SwapWindow(g_video->m_window);
 
-		// Drain forwarded events: abort on a key or click when allowed; quit always
-		// ends playback and is re-queued for the game loop.
+		// Drain forwarded events: abort on a key or click when allowed. A quit ends
+		// playback and is re-queued for the game loop AFTER the drain — re-pushing
+		// mid-drain would make this loop consume its own event forever.
 		SDL_Event event;
+		SDL_Event repostEvent;
+		bool repost = false;
 		while (MiniwinApp_PollEvent(event)) {
 			if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
-				MiniwinApp_PushEvent(event);
+				repostEvent = event;
+				repost = true;
 				aborted = true;
 			}
 			else if (
@@ -407,6 +433,9 @@ int VideoPlayer::Play(Win32GolApp* p_golApp, LPCSTR p_filename, int p_abortableO
 			) {
 				aborted = true;
 			}
+		}
+		if (repost) {
+			MiniwinApp_PushEvent(repostEvent);
 		}
 	}
 

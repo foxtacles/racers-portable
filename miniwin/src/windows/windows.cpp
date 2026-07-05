@@ -1,6 +1,7 @@
 #include "miniwin.h"
 
 #include <SDL3/SDL.h>
+#include <miniwin/miniwinapp.h>
 #include <miniwin/objbase.h>
 #include <miniwin/windows.h>
 
@@ -352,7 +353,12 @@ int MessageBox(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 	}
 
 	SDL_LogError(LOG_CATEGORY_MINIWIN, "%s: %s", lpCaption ? lpCaption : "", lpText ? lpText : "");
-	SDL_ShowSimpleMessageBox(flags, lpCaption, lpText, hWnd ? reinterpret_cast<SDL_Window*>(hWnd) : nullptr);
+
+	// Message boxes must run on the main thread (macOS); the game calls this from
+	// the game thread (fatal errors, usage).
+	MiniwinApp_RunOnMainThread([&]() {
+		SDL_ShowSimpleMessageBox(flags, lpCaption, lpText, hWnd ? reinterpret_cast<SDL_Window*>(hWnd) : nullptr);
+	});
 	return IDOK;
 }
 

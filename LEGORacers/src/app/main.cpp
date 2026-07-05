@@ -326,11 +326,19 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
 	if (g_gameThread) {
-		// Ask the game to shut down and wait for the thread to finish.
+		// Ask the game to shut down and wait for the thread to finish. The game
+		// thread's teardown marshals window operations back to this thread
+		// (MiniwinApp_RunOnMainThread), so keep pumping while it winds down —
+		// blocking outright deadlocks both sides.
 		SDL_Event quitEvent;
 		SDL_zero(quitEvent);
 		quitEvent.type = SDL_EVENT_QUIT;
 		MiniwinApp_PushEvent(quitEvent);
+
+		while (!SDL_GetAtomicInt(&g_gameThreadDone)) {
+			SDL_PumpEvents();
+			SDL_Delay(5);
+		}
 
 		int status = 0;
 		SDL_WaitThread(g_gameThread, &status);

@@ -246,9 +246,6 @@ void Win32GolApp_ApplyWindowMode(HWND p_hWnd, LegoBool32 p_fullscreen, LegoU32 p
 		if (p_fullscreen) {
 			SDL_SetWindowSize(window, (int) p_width, (int) p_height);
 			SDL_SetWindowFullscreen(window, true);
-			// Wait out the fullscreen transition so no frames present at the old
-			// windowed size (they showed up as a flash in the corner).
-			SDL_SyncWindow(window);
 		}
 		else {
 			SDL_SetWindowFullscreen(window, false);
