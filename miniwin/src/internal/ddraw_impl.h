@@ -6,6 +6,8 @@
 #include <miniwin/d3d.h>
 #include <miniwin/ddraw.h>
 
+class MiniwinRenderBackend;
+
 enum class MiniwinSurfaceKind {
 	Primary,
 	BackBuffer,
@@ -20,7 +22,13 @@ struct MiniwinSurface : public IDirectDrawSurface {
 
 	HRESULT QueryInterface(REFIID riid, void** ppvObject) override;
 	HRESULT AddAttachedSurface(LPDIRECTDRAWSURFACE lpDDSAttachedSurface) override;
-	HRESULT Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx) override;
+	HRESULT Blt(
+		LPRECT lpDestRect,
+		LPDIRECTDRAWSURFACE lpDDSrcSurface,
+		LPRECT lpSrcRect,
+		DWORD dwFlags,
+		LPDDBLTFX lpDDBltFx
+	) override;
 	HRESULT DeleteAttachedSurface(DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSAttachedSurface) override;
 	HRESULT Flip(LPDIRECTDRAWSURFACE lpDDSurfaceTargetOverride, DWORD dwFlags) override;
 	HRESULT GetAttachedSurface(LPDDSCAPS2 lpDDSCaps, LPDIRECTDRAWSURFACE* lplpDDAttachedSurface) override;
@@ -39,6 +47,10 @@ struct MiniwinSurface : public IDirectDrawSurface {
 	void EnsurePixels();
 	int BytesPerPixel() const;
 
+	// Converts the surface's pixels (palettized/16/32 bpp, honoring the color key) to
+	// tightly packed RGBA8. Returns false if there are no pixels yet.
+	bool ConvertToRGBA(void* p_out) const;
+
 	DDSURFACEDESC2 m_desc;
 	MiniwinSurfaceKind m_kind;
 	MiniwinSurface* m_backBuffer = nullptr;    // primary flip chain
@@ -49,6 +61,10 @@ struct MiniwinSurface : public IDirectDrawSurface {
 	bool m_hasColorKey = false;
 	void* m_pixels = nullptr;
 	int m_pitch = 0;
+	struct MiniwinDirectDraw* m_ddraw = nullptr;
+	Uint32 m_backendTexture = 0;
+	bool m_textureDirty = false;
+	int m_paletteVersion = -1;
 };
 
 struct MiniwinDirectDraw : public IDirectDraw {
@@ -56,19 +72,31 @@ struct MiniwinDirectDraw : public IDirectDraw {
 
 	HRESULT QueryInterface(REFIID riid, void** ppvObject) override;
 	HRESULT CreateClipper(DWORD dwFlags, LPDIRECTDRAWCLIPPER* lplpDDClipper, IUnknown* pUnkOuter) override;
-	HRESULT CreatePalette(DWORD dwFlags, LPPALETTEENTRY lpDDColorArray, LPDIRECTDRAWPALETTE* lplpDDPalette, IUnknown* pUnkOuter) override;
-	HRESULT CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc, LPDIRECTDRAWSURFACE* lplpDDSurface, IUnknown* pUnkOuter) override;
+	HRESULT CreatePalette(
+		DWORD dwFlags,
+		LPPALETTEENTRY lpDDColorArray,
+		LPDIRECTDRAWPALETTE* lplpDDPalette,
+		IUnknown* pUnkOuter
+	) override;
+	HRESULT CreateSurface(
+		LPDDSURFACEDESC2 lpDDSurfaceDesc,
+		LPDIRECTDRAWSURFACE* lplpDDSurface,
+		IUnknown* pUnkOuter
+	) override;
 	HRESULT GetCaps(LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) override;
 	HRESULT GetDisplayMode(LPDDSURFACEDESC lpDDSurfaceDesc) override;
 	HRESULT RestoreDisplayMode() override;
 	HRESULT SetCooperativeLevel(HWND hWnd, DWORD dwFlags) override;
 	HRESULT SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags) override;
 
+	MiniwinRenderBackend* GetBackend();
+
 	HWND m_hwnd = nullptr;
 	DWORD m_coopFlags = 0;
 	DWORD m_modeWidth = 0;
 	DWORD m_modeHeight = 0;
 	DWORD m_modeBpp = 0;
+	MiniwinRenderBackend* m_backend = nullptr;
 };
 
 // Fills a DDPIXELFORMAT for a plain RGB mode of the given depth (565 for 16 bpp,

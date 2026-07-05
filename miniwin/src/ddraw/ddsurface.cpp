@@ -3,6 +3,7 @@
 
 #include "ddraw_impl.h"
 #include "miniwin.h"
+#include "renderbackend.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -92,19 +93,33 @@ HRESULT MiniwinSurface::DeleteAttachedSurface(DWORD dwFlags, LPDIRECTDRAWSURFACE
 
 HRESULT MiniwinSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx)
 {
+	MiniwinRenderBackend* backend = m_ddraw ? m_ddraw->GetBackend() : nullptr;
+
 	if (dwFlags & DDBLT_COLORFILL) {
-		// Clearing the render target; handled by the render backend (M2).
+		// Fill of the 3D render target (usually black). Only a full clear is used.
+		if (backend && lpDDBltFx) {
+			backend->Clear(nullptr, 0.f, 0.f, 0.f, true, false);
+		}
 		return DD_OK;
 	}
 
-	// Presentation blit (render surface -> primary) or surface copy; handled by the
-	// render backend (M2).
+	// A blit from the render surface to the primary surface is the windowed-mode
+	// present.
+	MiniwinSurface* source = static_cast<MiniwinSurface*>(lpDDSrcSurface);
+	if (backend && m_kind == MiniwinSurfaceKind::Primary && source) {
+		backend->Present();
+	}
+
 	return DD_OK;
 }
 
 HRESULT MiniwinSurface::Flip(LPDIRECTDRAWSURFACE lpDDSurfaceTargetOverride, DWORD dwFlags)
 {
-	// Presentation; handled by the render backend (M2).
+	// Fullscreen present.
+	MiniwinRenderBackend* backend = m_ddraw ? m_ddraw->GetBackend() : nullptr;
+	if (backend) {
+		backend->Present();
+	}
 	return DD_OK;
 }
 
@@ -171,6 +186,9 @@ HRESULT MiniwinSurface::Lock(LPRECT lpDestRect, LPDDSURFACEDESC2 lpDDSurfaceDesc
 
 HRESULT MiniwinSurface::Unlock(LPRECT lpRect)
 {
+	if (m_kind == MiniwinSurfaceKind::Texture) {
+		m_textureDirty = true;
+	}
 	return DD_OK;
 }
 
@@ -194,19 +212,27 @@ HRESULT MiniwinSurface::SetColorKey(DWORD dwFlags, LPDDCOLORKEY lpDDColorKey)
 	else {
 		m_hasColorKey = false;
 	}
+	if (m_kind == MiniwinSurfaceKind::Texture) {
+		m_textureDirty = true;
+	}
 	return DD_OK;
 }
 
 HRESULT MiniwinSurface::SetPalette(LPDIRECTDRAWPALETTE lpDDPalette)
 {
 	m_palette = lpDDPalette;
+	if (m_kind == MiniwinSurfaceKind::Texture) {
+		m_textureDirty = true;
+		m_paletteVersion = -1;
+	}
 	return DD_OK;
 }
 
 HRESULT MiniwinSurface::GetHandle(void* lpDirect3DDevice, DWORD* lpHandle)
 {
+	static DWORD counter = 0;
 	if (lpHandle) {
-		*lpHandle = (DWORD) (uintptr_t) this;
+		*lpHandle = ++counter;
 	}
 	return DD_OK;
 }
@@ -214,6 +240,102 @@ HRESULT MiniwinSurface::GetHandle(void* lpDirect3DDevice, DWORD* lpHandle)
 HRESULT MiniwinSurface::PaletteChanged(DWORD dwStart, DWORD dwCount)
 {
 	return DD_OK;
+}
+
+bool MiniwinSurface::ConvertToRGBA(void* p_out) const
+{
+	if (!m_pixels) {
+		return false;
+	}
+
+	const int width = (int) m_desc.dwWidth;
+	const int height = (int) m_desc.dwHeight;
+	const DDPIXELFORMAT& format = m_desc.ddpfPixelFormat;
+	Uint8* out = (Uint8*) p_out;
+
+	const bool paletted = (format.dwFlags & (DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXED4)) != 0;
+	const DWORD keyValue = m_colorKey.dwColorSpaceLowValue;
+
+	if (paletted) {
+		const PALETTEENTRY* entries = m_palette ? m_palette->m_entries : nullptr;
+		for (int y = 0; y < height; y++) {
+			const Uint8* src = (const Uint8*) m_pixels + (size_t) y * m_pitch;
+			for (int x = 0; x < width; x++) {
+				Uint8 index = src[x];
+				Uint8* dst = out + ((size_t) y * width + x) * 4;
+				if (entries) {
+					dst[0] = entries[index].peRed;
+					dst[1] = entries[index].peGreen;
+					dst[2] = entries[index].peBlue;
+				}
+				else {
+					dst[0] = dst[1] = dst[2] = index;
+				}
+				dst[3] = (m_hasColorKey && index == keyValue) ? 0 : 255;
+			}
+		}
+		return true;
+	}
+
+	const DWORD bpp = format.dwRGBBitCount;
+	const DWORD rMask = format.dwRBitMask;
+	const DWORD gMask = format.dwGBitMask;
+	const DWORD bMask = format.dwBBitMask;
+	const DWORD aMask = (format.dwFlags & DDPF_ALPHAPIXELS) ? format.dwRGBAlphaBitMask : 0;
+
+	// Expands a masked channel to 8 bits.
+	auto expand = [](DWORD value, DWORD mask) -> Uint8 {
+		if (!mask) {
+			return 255;
+		}
+		int shift = 0;
+		DWORD m = mask;
+		while (!(m & 1)) {
+			m >>= 1;
+			shift++;
+		}
+		int bits = 0;
+		while (m & 1) {
+			m >>= 1;
+			bits++;
+		}
+		DWORD channel = (value & mask) >> shift;
+		if (bits >= 8) {
+			return (Uint8) (channel >> (bits - 8));
+		}
+		// Replicate high bits into the low end for a full 0-255 range.
+		return (Uint8) ((channel * 255) / ((1u << bits) - 1));
+	};
+
+	for (int y = 0; y < height; y++) {
+		const Uint8* src = (const Uint8*) m_pixels + (size_t) y * m_pitch;
+		for (int x = 0; x < width; x++) {
+			DWORD value;
+			if (bpp == 16) {
+				value = ((const Uint16*) src)[x];
+			}
+			else {
+				value = ((const Uint32*) src)[x];
+			}
+
+			Uint8* dst = out + ((size_t) y * width + x) * 4;
+			dst[0] = expand(value, rMask);
+			dst[1] = expand(value, gMask);
+			dst[2] = expand(value, bMask);
+
+			if (m_hasColorKey && value == keyValue) {
+				dst[3] = 0;
+			}
+			else if (aMask) {
+				dst[3] = expand(value, aMask);
+			}
+			else {
+				dst[3] = 255;
+			}
+		}
+	}
+
+	return true;
 }
 
 // --- Base-interface default bodies (never instantiated directly) ---

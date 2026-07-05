@@ -27,3 +27,7 @@ inline void MiniwinApp_RunOnMainThread(F&& p_fn)
 
 // Seeds the emulated registry's LangID value (--language command-line argument).
 void MiniwinSetRegistryLangId(DWORD p_langId);
+
+// Configures SDL window attributes required by the render backend; returns extra
+// SDL_WindowFlags to OR into SDL_CreateWindow. Main thread, before window creation.
+Uint32 MiniwinBackend_PrepareWindowFlags();

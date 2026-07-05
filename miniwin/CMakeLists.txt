@@ -17,6 +17,9 @@ add_library(miniwin STATIC
   src/d3d/d3d.cpp
   src/d3d/d3ddevice.cpp
 
+  # Render backends
+  src/d3d/backends/opengl3/renderer.cpp
+
   # DirectSound
   src/dsound/dsound.cpp
 
@@ -32,6 +35,7 @@ target_include_directories(miniwin
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
   PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/internal"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/d3d/backends/opengl3"
 )
 
 # POSIX shims for MSVC-specific CRT headers (<io.h>); real Windows provides these natively.

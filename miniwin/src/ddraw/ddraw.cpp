@@ -2,6 +2,7 @@
 
 #include "ddraw_impl.h"
 #include "miniwin.h"
+#include "renderbackend.h"
 
 #include <string.h>
 
@@ -141,11 +142,29 @@ HRESULT MiniwinDirectDraw::CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc, LPDIR
 	}
 
 	MiniwinSurface* surface = new MiniwinSurface(desc, kind);
+	surface->m_ddraw = this;
+
+	static const char* statsEnv = getenv("RACERS_GL_STATS");
+	static int surfaceLog = 0;
+	if (statsEnv && surfaceLog < 20) {
+		surfaceLog++;
+		SDL_LogInfo(
+			LOG_CATEGORY_MINIWIN,
+			"CreateSurface kind=%d %ux%u bpp=%u flags=%08x caps=%08x",
+			(int) kind,
+			desc.dwWidth,
+			desc.dwHeight,
+			desc.ddpfPixelFormat.dwRGBBitCount,
+			desc.ddpfPixelFormat.dwFlags,
+			caps
+		);
+	}
 
 	if (kind == MiniwinSurfaceKind::Primary && (caps & DDSCAPS_FLIP) && (caps & DDSCAPS_COMPLEX)) {
 		DDSURFACEDESC2 backDesc = desc;
 		backDesc.ddsCaps.dwCaps = DDSCAPS_BACKBUFFER | DDSCAPS_3DDEVICE | DDSCAPS_VIDEOMEMORY;
 		surface->m_backBuffer = new MiniwinSurface(backDesc, MiniwinSurfaceKind::BackBuffer);
+		surface->m_backBuffer->m_ddraw = this;
 	}
 
 	*lplpDDSurface = surface;
@@ -193,8 +212,23 @@ HRESULT MiniwinDirectDraw::GetDisplayMode(LPDDSURFACEDESC lpDDSurfaceDesc)
 	lpDDSurfaceDesc->dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
 	lpDDSurfaceDesc->dwWidth = m_modeWidth ? m_modeWidth : width;
 	lpDDSurfaceDesc->dwHeight = m_modeHeight ? m_modeHeight : height;
-	MiniwinFillRgbPixelFormat(&lpDDSurfaceDesc->ddpfPixelFormat, m_modeBpp ? m_modeBpp : 32);
+	// Report 16 bpp before any mode was set: the game compares the desktop depth with
+	// its requested depth to decide whether it must go fullscreen, and 16 bpp is its
+	// default. SDL abstracts the real desktop format away entirely.
+	MiniwinFillRgbPixelFormat(&lpDDSurfaceDesc->ddpfPixelFormat, m_modeBpp ? m_modeBpp : 16);
 	return DD_OK;
+}
+
+MiniwinRenderBackend* MiniwinDirectDraw::GetBackend()
+{
+	if (!m_backend && m_hwnd) {
+		m_backend = MiniwinBackend_Create(
+			reinterpret_cast<SDL_Window*>(m_hwnd),
+			m_modeWidth ? (int) m_modeWidth : 640,
+			m_modeHeight ? (int) m_modeHeight : 480
+		);
+	}
+	return m_backend;
 }
 
 HRESULT MiniwinDirectDraw::RestoreDisplayMode()

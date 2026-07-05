@@ -246,7 +246,14 @@ int _open(const char* path, int oflag, int pmode)
 {
 	char resolved[1024];
 	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	return open(resolved, oflag, (mode_t) pmode);
+	int fd = open(resolved, oflag, (mode_t) pmode);
+
+	static const char* fsLog = getenv("RACERS_FS_LOG");
+	if (fsLog) {
+		SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_open('%s' -> '%s') = %d", path, resolved, fd);
+	}
+
+	return fd;
 }
 
 int _close(int fd)
@@ -256,7 +263,16 @@ int _close(int fd)
 
 int _read(int fd, void* buffer, unsigned int count)
 {
-	return (int) read(fd, buffer, count);
+	int result = (int) read(fd, buffer, count);
+
+	static const char* fsLog = getenv("RACERS_FS_LOG");
+	static int logged = 0;
+	if (fsLog && logged < 40) {
+		logged++;
+		SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_read(fd=%d, %u) = %d", fd, count, result);
+	}
+
+	return result;
 }
 
 int _write(int fd, const void* buffer, unsigned int count)
