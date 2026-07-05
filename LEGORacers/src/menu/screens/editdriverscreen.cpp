@@ -82,7 +82,9 @@ LegoBool32 EditDriverScreen::CreateRacerCarousel(
 	}
 
 	MenuRacerCarousel::CreateParams createParams;
-	::memcpy(&createParams, sourceParams, sizeof(createParams));
+	// 64-bit compatibility: the stored entry is a model-carousel binding; copying
+	// sizeof(createParams) would read past it. The fields beyond it are assigned below.
+	::memcpy(&createParams, sourceParams, sizeof(MenuModelCarousel::CreateParams));
 	ApplyWidgetDefaults(&createParams);
 
 	createParams.m_context = m_context;

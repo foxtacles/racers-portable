@@ -50,6 +50,23 @@ Lightly touched:
 - `LEGORacers/src/app/guids.cpp` — excluded from portable builds (miniwin owns GUID storage)
 - `LEGORacers/racers.rc` — Windows-resource icon; portable builds embed via SDL
 
+Lightly touched — `// 64-bit compatibility:` tagged fixes (pointer-width assumptions the
+original 32-bit source could make; each is a few lines):
+- `common/src/golstream.cpp`, `common/src/golfilesource.cpp` — pointer/int puns in the
+  buffered-read paths
+- `common/src/golfontbase.cpp`, `LEGORacers/src/race/circuitracerunner.cpp`,
+  `circuitstandings.cpp`, `raceforcefeedback.cpp` — pointers carried through
+  `undefined4` values
+- `LEGORacers/src/menu/screens/menuscreen.cpp` — `g_rootIconParams` is a byte image of
+  the 32-bit `CreateParams` (root icon id landed at the wrong offset on 64-bit; every
+  widget silently failed to attach)
+- `LEGORacers/src/menu/screens/menugamescreen.cpp`, `editdriverscreen.cpp` — carousel
+  binding copies sized to the stored record instead of the larger destination struct
+
+Structural 64-bit hazards (two classes modeling the same bytes with different field
+types) are fixed **upstream** in the decomp instead — see the menu binding-type
+unification (#505) — per the upstream-first policy below.
+
 Excluded from portable builds (software rasterizer, deferred):
 `GolDP/src/render/golrasterizers1.cpp`, `golrasterizers2.cpp`,
 `golsoftwarerenderer.cpp`, `golsoftwarematerial*.cpp`. The two `__declspec(naked)`
@@ -71,6 +88,12 @@ git merge racers/master
 Conflicts should only ever appear in the files listed above. After merging, rebuild and
 run; if upstream renamed symbols used by `miniwin` glue or the rewritten files, fix those
 call sites (the decomp side wins naming).
+
+**Upstream-first policy.** Any change the original 32-bit binary can still byte-match —
+renames, type unifications, restructuring — goes into the decomp first, verified there
+with a full reccmp report diff (zero regressions), and reaches this fork through a merge.
+Only genuine portability work (pointer-width fixes, modern-compiler workarounds, platform
+shims) is made directly here, tagged `// 64-bit compatibility:` or `// [library:xxx]`.
 
 ## Removed decompilation artifacts
 

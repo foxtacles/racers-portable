@@ -132,7 +132,9 @@ LegoBool32 MenuScreen::CreateRootIcon()
 	MenuIcon::CreateParams createParams;
 
 	memset(&createParams, 0, sizeof(createParams));
-	memcpy(&createParams, g_rootIconParams, sizeof(g_rootIconParams));
+	// 64-bit compatibility: g_rootIconParams is a byte image of the 32-bit CreateParams
+	// (all zeros with m_id = 1 at offset 0x20); assign the field instead of copying raw bytes.
+	createParams.m_id = static_cast<undefined2>(g_rootIconParams[8]);
 
 	createParams.m_golExport = m_golExport;
 	createParams.m_renderer = m_renderer;

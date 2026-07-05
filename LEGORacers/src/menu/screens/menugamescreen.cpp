@@ -101,7 +101,9 @@ undefined4 MenuGameScreen::CreatePartCarousel(CarPartCarousel* p_source, undefin
 	}
 
 	CarPartCarousel::CreateParams createParams;
-	::memcpy(&createParams, inputBindingEntry, sizeof(createParams));
+	// 64-bit compatibility: the stored entry is a model-carousel binding; copying
+	// sizeof(createParams) would read past it. The fields beyond it are assigned below.
+	::memcpy(&createParams, inputBindingEntry, sizeof(MenuModelCarousel::CreateParams));
 	ApplyWidgetDefaults(&createParams);
 
 	MenuGameContext* context = m_context;
