@@ -8,7 +8,8 @@
 #include <sys/stat.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifndef _O_RDONLY
@@ -31,14 +32,14 @@ extern "C" {
 #define _S_IWRITE S_IWUSR
 #endif
 
-int _open(const char* path, int oflag, int pmode);
-int _close(int fd);
-int _read(int fd, void* buffer, unsigned int count);
-int _write(int fd, const void* buffer, unsigned int count);
-long _lseek(int fd, long offset, int origin);
-long _tell(int fd);
-int _access(const char* path, int mode);
-int _commit(int fd);
+	int _open(const char* path, int oflag, int pmode);
+	int _close(int fd);
+	int _read(int fd, void* buffer, unsigned int count);
+	int _write(int fd, const void* buffer, unsigned int count);
+	long _lseek(int fd, long offset, int origin);
+	long _tell(int fd);
+	int _access(const char* path, int mode);
+	int _commit(int fd);
 
 #ifdef __cplusplus
 }

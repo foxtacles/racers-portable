@@ -1,8 +1,6 @@
 # LEGO Racers, portable
 
-[Contributing](/CONTRIBUTING.md)
-
-This initiative is a portable version of LEGO Racers (1999) based on the [decompilation project](https://github.com/foxtacles/racers). Our primary goal is to transform the codebase to achieve platform independence, thereby enhancing compatibility across various systems while preserving the original game's experience as faithfully as possible.
+This initiative is a portable version of LEGO Racers (1999) based on the [decompilation project](https://github.com/isledecomp/racers). Our primary goal is to transform the codebase to achieve platform independence, thereby enhancing compatibility across various systems while preserving the original game's experience as faithfully as possible.
 
 Please note: this project is primarily dedicated to achieving platform independence without altering the core gameplay or rewriting code for improvement's sake. While those are worthwhile objectives, they are not within the scope of this project.
 
@@ -10,9 +8,9 @@ Please note: this project is primarily dedicated to achieving platform independe
 
 | Platform | Status |
 | - | - |
-| Windows (x64) | [![CI](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml) |
-| macOS (arm64) | [![CI](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml) |
-| Linux (x64) | [![CI](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/foxtacles/racers-portable/actions/workflows/ci.yml) |
+| Windows (x64) | [![CI](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml) |
+| macOS (arm64) | [![CI](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml) |
+| Linux (x64) | [![CI](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml/badge.svg)](https://github.com/isledecomp/racers-portable/actions/workflows/ci.yml) |
 | Web | planned (deferred) |
 
 We are actively working to support more platforms. If you have experience with a particular platform, we encourage you to contribute to `racers-portable`.
@@ -40,7 +38,7 @@ To achieve our goal of platform independence, we need to replace any Windows-onl
 | Threads, Mutexes (Synchronization) | [SDL3](https://www.libsdl.org/) | ✅ |
 | Keyboard/Mouse, DirectInput (Input) | [SDL3](https://www.libsdl.org/) | ✅ |
 | Joystick/Gamepad + Force Feedback, DirectInput (Input) | [SDL3](https://www.libsdl.org/) | ✅ |
-| WinMM, DirectSound (Audio) | [SDL3](https://www.libsdl.org/), [miniaudio](https://miniaud.io/) | ✅ |
+| WinMM (timers), DirectSound (Audio) | [SDL3](https://www.libsdl.org/), [miniaudio](https://miniaud.io/) | ✅ |
 | DirectDraw (2D video) | [SDL3](https://www.libsdl.org/) | ✅ |
 | Direct3D immediate mode (3D video) | OpenGL 3.3 today; [SDL3 GPU](https://www.libsdl.org/) and OpenGL ES 3.0 backends planned | 🚧 |
 | DirectShow, Indeo 5 (Video playback) | In-tree AVI demuxer + Indeo 5 decoder (vendored from [FFmpeg](https://ffmpeg.org/) n4.4.4, byte-exact against ffmpeg), [SDL3](https://www.libsdl.org/) | ✅ |

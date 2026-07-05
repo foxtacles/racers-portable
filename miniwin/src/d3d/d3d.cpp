@@ -12,8 +12,17 @@ struct MiniwinDirect3D : public IDirect3D3 {
 	explicit MiniwinDirect3D(MiniwinDirectDraw* p_ddraw) : m_ddraw(p_ddraw) {}
 
 	HRESULT EnumDevices(LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg) override;
-	HRESULT EnumZBufferFormats(REFCLSID riidDevice, LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback, LPVOID lpContext) override;
-	HRESULT CreateDevice(REFCLSID rclsid, LPDIRECTDRAWSURFACE lpDDS, LPDIRECT3DDEVICE3* lplpD3DDevice, IUnknown* pUnkOuter) override;
+	HRESULT EnumZBufferFormats(
+		REFCLSID riidDevice,
+		LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
+		LPVOID lpContext
+	) override;
+	HRESULT CreateDevice(
+		REFCLSID rclsid,
+		LPDIRECTDRAWSURFACE lpDDS,
+		LPDIRECT3DDEVICE3* lplpD3DDevice,
+		IUnknown* pUnkOuter
+	) override;
 	HRESULT CreateViewport(LPDIRECT3DVIEWPORT3* lplpD3DViewport, IUnknown* pUnkOuter) override;
 	HRESULT CreateMaterial(LPDIRECT3DMATERIAL3* lplpDirect3DMaterial, IUnknown* pUnkOuter) override;
 
@@ -32,7 +41,8 @@ void MiniwinFillDeviceDesc(D3DDEVICEDESC* p_desc)
 {
 	memset(p_desc, 0, sizeof(*p_desc));
 	p_desc->dwSize = sizeof(*p_desc);
-	p_desc->dwFlags = D3DDD_COLORMODEL | D3DDD_DEVCAPS | D3DDD_TRICAPS | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH;
+	p_desc->dwFlags =
+		D3DDD_COLORMODEL | D3DDD_DEVCAPS | D3DDD_TRICAPS | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH;
 	p_desc->dcmColorModel = D3DCOLOR_RGB;
 	p_desc->dwDevCaps = D3DDEVCAPS_TEXTUREVIDEOMEMORY;
 	p_desc->dwDeviceRenderBitDepth = DDBD_16 | DDBD_32;
@@ -49,7 +59,8 @@ void MiniwinFillDeviceDesc(D3DDEVICEDESC* p_desc)
 	tri.dwDestBlendCaps = tri.dwSrcBlendCaps;
 	tri.dwTextureCaps = D3DPTEXTURECAPS_PERSPECTIVE | D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_TRANSPARENCY;
 	tri.dwTextureFilterCaps = D3DPTFILTERCAPS_NEAREST | D3DPTFILTERCAPS_LINEAR | D3DPTFILTERCAPS_MIPNEAREST |
-							  D3DPTFILTERCAPS_MIPLINEAR | D3DPTFILTERCAPS_LINEARMIPNEAREST | D3DPTFILTERCAPS_LINEARMIPLINEAR;
+							  D3DPTFILTERCAPS_MIPLINEAR | D3DPTFILTERCAPS_LINEARMIPNEAREST |
+							  D3DPTFILTERCAPS_LINEARMIPLINEAR;
 	tri.dwTextureAddressCaps = D3DPTADDRESSCAPS_WRAP;
 }
 
@@ -68,7 +79,11 @@ HRESULT MiniwinDirect3D::EnumDevices(LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallb
 	return D3D_OK;
 }
 
-HRESULT MiniwinDirect3D::EnumZBufferFormats(REFCLSID riidDevice, LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback, LPVOID lpContext)
+HRESULT MiniwinDirect3D::EnumZBufferFormats(
+	REFCLSID riidDevice,
+	LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
+	LPVOID lpContext
+)
 {
 	DDPIXELFORMAT format;
 	memset(&format, 0, sizeof(format));
@@ -90,7 +105,12 @@ HRESULT MiniwinDirect3D::EnumZBufferFormats(REFCLSID riidDevice, LPD3DENUMPIXELF
 	return D3D_OK;
 }
 
-HRESULT MiniwinDirect3D::CreateDevice(REFCLSID rclsid, LPDIRECTDRAWSURFACE lpDDS, LPDIRECT3DDEVICE3* lplpD3DDevice, IUnknown* pUnkOuter)
+HRESULT MiniwinDirect3D::CreateDevice(
+	REFCLSID rclsid,
+	LPDIRECTDRAWSURFACE lpDDS,
+	LPDIRECT3DDEVICE3* lplpD3DDevice,
+	IUnknown* pUnkOuter
+)
 {
 	if (!lplpD3DDevice) {
 		return DDERR_INVALIDPARAMS;

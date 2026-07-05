@@ -33,7 +33,8 @@ int MiniwinSurface::BytesPerPixel() const
 	}
 
 	DWORD bpp = m_desc.ddpfPixelFormat.dwRGBBitCount;
-	if (m_desc.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED2 | DDPF_PALETTEINDEXED1)) {
+	if (m_desc.ddpfPixelFormat.dwFlags &
+		(DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED2 | DDPF_PALETTEINDEXED1)) {
 		bpp = 8;
 	}
 	if (bpp == 0) {
@@ -91,7 +92,13 @@ HRESULT MiniwinSurface::DeleteAttachedSurface(DWORD dwFlags, LPDIRECTDRAWSURFACE
 	return DD_OK;
 }
 
-HRESULT MiniwinSurface::Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx)
+HRESULT MiniwinSurface::Blt(
+	LPRECT lpDestRect,
+	LPDIRECTDRAWSURFACE lpDDSrcSurface,
+	LPRECT lpSrcRect,
+	DWORD dwFlags,
+	LPDDBLTFX lpDDBltFx
+)
 {
 	MiniwinRenderBackend* backend = m_ddraw ? m_ddraw->GetBackend() : nullptr;
 

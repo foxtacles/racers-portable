@@ -6,7 +6,20 @@
 
 #include <string.h>
 
-MINIWIN_DEFINE_GUID(MINIWIN_GUID_Direct3DDevice, 0x682656f3, 0x121a, 0x4d97, 0x9a, 0xb2, 0xc5, 0x88, 0x14, 0x91, 0x00, 0x01);
+MINIWIN_DEFINE_GUID(
+	MINIWIN_GUID_Direct3DDevice,
+	0x682656f3,
+	0x121a,
+	0x4d97,
+	0x9a,
+	0xb2,
+	0xc5,
+	0x88,
+	0x14,
+	0x91,
+	0x00,
+	0x01
+);
 
 // IDirect3D3 lives in d3d.cpp
 IDirect3D3* MiniwinCreateDirect3D(MiniwinDirectDraw* p_ddraw);
@@ -96,7 +109,12 @@ HRESULT MiniwinDirectDraw::CreateClipper(DWORD dwFlags, LPDIRECTDRAWCLIPPER* lpl
 	return DirectDrawCreateClipper(dwFlags, lplpDDClipper, pUnkOuter);
 }
 
-HRESULT MiniwinDirectDraw::CreatePalette(DWORD dwFlags, LPPALETTEENTRY lpDDColorArray, LPDIRECTDRAWPALETTE* lplpDDPalette, IUnknown* pUnkOuter)
+HRESULT MiniwinDirectDraw::CreatePalette(
+	DWORD dwFlags,
+	LPPALETTEENTRY lpDDColorArray,
+	LPDIRECTDRAWPALETTE* lplpDDPalette,
+	IUnknown* pUnkOuter
+)
 {
 	if (!lplpDDPalette) {
 		return DDERR_INVALIDPARAMS;
@@ -106,7 +124,11 @@ HRESULT MiniwinDirectDraw::CreatePalette(DWORD dwFlags, LPPALETTEENTRY lpDDColor
 	return DD_OK;
 }
 
-HRESULT MiniwinDirectDraw::CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc, LPDIRECTDRAWSURFACE* lplpDDSurface, IUnknown* pUnkOuter)
+HRESULT MiniwinDirectDraw::CreateSurface(
+	LPDDSURFACEDESC2 lpDDSurfaceDesc,
+	LPDIRECTDRAWSURFACE* lplpDDSurface,
+	IUnknown* pUnkOuter
+)
 {
 	if (!lpDDSurfaceDesc || !lplpDDSurface) {
 		return DDERR_INVALIDPARAMS;
@@ -248,7 +270,13 @@ HRESULT MiniwinDirectDraw::SetCooperativeLevel(HWND hWnd, DWORD dwFlags)
 	return DD_OK;
 }
 
-HRESULT MiniwinDirectDraw::SetDisplayMode(DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags)
+HRESULT MiniwinDirectDraw::SetDisplayMode(
+	DWORD dwWidth,
+	DWORD dwHeight,
+	DWORD dwBPP,
+	DWORD dwRefreshRate,
+	DWORD dwFlags
+)
 {
 	// SDL owns the actual display; fullscreen is handled at the window level by the
 	// application shell. Record the requested mode so surfaces get the right format.

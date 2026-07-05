@@ -70,12 +70,12 @@ public:
 protected:
 	void ReadFontCharList(GolFileParser* p_parser, undefined2* p_chars, LegoU16* p_count);
 
-	GolD3DRenderDevice* m_renderer;   // 0x0c
-	GolFontLibrary* m_next;           // 0x10
-	LegoU32 m_itemCount;              // 0x14
-	GolString* m_charStrings;         // 0x18
-	undefined2** m_charCodes;         // 0x1c
-	LegoU16* m_charCounts;            // 0x20
+	GolD3DRenderDevice* m_renderer; // 0x0c
+	GolFontLibrary* m_next;         // 0x10
+	LegoU32 m_itemCount;            // 0x14
+	GolString* m_charStrings;       // 0x18
+	undefined2** m_charCodes;       // 0x1c
+	LegoU16* m_charCounts;          // 0x20
 	// Typed as a pointer for 64-bit compatibility (was undefined4 in the decomp).
 	GolHashTable::Entry* m_hashTableCheckpoint; // 0x24
 };

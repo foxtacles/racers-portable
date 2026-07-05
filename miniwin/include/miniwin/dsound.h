@@ -110,7 +110,11 @@ struct IDirectSoundBuffer : virtual public IUnknown {
 };
 
 struct IDirectSound : virtual public IUnknown {
-	virtual HRESULT CreateSoundBuffer(LPCDSBUFFERDESC pcDSBufferDesc, LPDIRECTSOUNDBUFFER* ppDSBuffer, IUnknown* pUnkOuter);
+	virtual HRESULT CreateSoundBuffer(
+		LPCDSBUFFERDESC pcDSBufferDesc,
+		LPDIRECTSOUNDBUFFER* ppDSBuffer,
+		IUnknown* pUnkOuter
+	);
 	virtual HRESULT GetCaps(LPDSCAPS pDSCaps);
 	virtual HRESULT SetCooperativeLevel(HWND hwnd, DWORD dwLevel);
 };

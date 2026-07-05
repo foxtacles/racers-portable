@@ -1,6 +1,6 @@
 # racers-portable — agent notes
 
-Cross-platform port (SDL3) of the [LEGO Racers decompilation](https://github.com/foxtacles/racers), modeled on [isle-portable](https://github.com/isledecomp/isle-portable). Windows/Linux/macOS today; emscripten deferred.
+Cross-platform port (SDL3) of the [LEGO Racers decompilation](https://github.com/isledecomp/racers), modeled on [isle-portable](https://github.com/isledecomp/isle-portable). Windows/Linux/macOS today; emscripten deferred.
 
 ## Ground rules
 

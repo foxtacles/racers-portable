@@ -28,7 +28,14 @@ LSTATUS RegOpenKeyEx(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesi
 	return RegOpenKey(hKey, lpSubKey, phkResult);
 }
 
-LSTATUS RegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
+LSTATUS RegQueryValueEx(
+	HKEY hKey,
+	LPCSTR lpValueName,
+	LPDWORD lpReserved,
+	LPDWORD lpType,
+	LPBYTE lpData,
+	LPDWORD lpcbData
+)
 {
 	if (lpValueName && SDL_strcasecmp(lpValueName, "LangID") == 0 && g_langIdSet) {
 		if (lpType) {

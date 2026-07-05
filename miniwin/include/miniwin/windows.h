@@ -114,8 +114,7 @@ typedef const GUID& REFGUID;
 typedef const GUID& REFIID;
 typedef const GUID& REFCLSID;
 
-#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)                                                   \
-	extern const GUID name
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) extern const GUID name
 #define MINIWIN_DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)                                           \
 	const GUID name = {l, w1, w2, {b1, b2, b3, b4, b5, b6, b7, b8}}
 
@@ -257,7 +256,14 @@ typedef WCHAR* LPWSTR;
 typedef const WCHAR* LPCWSTR;
 #define CP_ACP 0
 
-int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar);
+int MultiByteToWideChar(
+	UINT CodePage,
+	DWORD dwFlags,
+	LPCSTR lpMultiByteStr,
+	int cbMultiByte,
+	LPWSTR lpWideCharStr,
+	int cchWideChar
+);
 
 struct WNDCLASSA {
 	UINT style;
@@ -353,8 +359,7 @@ typedef MSG* LPMSG;
 #define WS_VSCROLL 0x00200000L
 #define WS_CHILD 0x40000000L
 #define WS_TABSTOP 0x00010000L
-#define WS_OVERLAPPEDWINDOW                                                                                            \
-	(WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+#define WS_OVERLAPPEDWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 
 #define CBS_DROPDOWNLIST 0x0003L
 #define CB_ADDSTRING 0x0143
@@ -437,11 +442,11 @@ typedef MSG* LPMSG;
 #define OPEN_EXISTING 3
 #define FILE_ATTRIBUTE_NORMAL 0x00000080
 #define FILE_FLAG_SEQUENTIAL_SCAN 0x08000000
-#define INVALID_FILE_ATTRIBUTES ((DWORD) -1)
+#define INVALID_FILE_ATTRIBUTES ((DWORD) - 1)
 #define FILE_BEGIN 0
 #define FILE_CURRENT 1
 #define FILE_END 2
-#define INVALID_SET_FILE_POINTER ((DWORD) -1)
+#define INVALID_SET_FILE_POINTER ((DWORD) - 1)
 #define INVALID_FILE_SIZE ((DWORD) 0xFFFFFFFF)
 
 // --- Registry ---
@@ -460,7 +465,7 @@ typedef MSG* LPMSG;
 #define DISP_CHANGE_FAILED (-1)
 #define CDS_FULLSCREEN 0x00000004
 #define CDS_RESET 0x40000000
-#define ENUM_CURRENT_SETTINGS ((DWORD) -1)
+#define ENUM_CURRENT_SETTINGS ((DWORD) - 1)
 
 // --- Priority classes ---
 #define NORMAL_PRIORITY_CLASS 0x00000020
@@ -504,7 +509,13 @@ LRESULT DispatchMessage(const MSG* lpMsg);
 int GetSystemMetrics(int nIndex);
 
 // --- Functions: dialogs ---
-INT_PTR DialogBoxIndirectParam(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam);
+INT_PTR DialogBoxIndirectParam(
+	HINSTANCE hInstance,
+	LPCDLGTEMPLATE lpTemplate,
+	HWND hWndParent,
+	DLGPROC lpDialogFunc,
+	LPARAM dwInitParam
+);
 BOOL EndDialog(HWND hDlg, INT_PTR nResult);
 LRESULT SendDlgItemMessage(HWND hDlg, int nIDDlgItem, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT SendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -539,8 +550,20 @@ HANDLE CreateFile(
 	DWORD dwFlagsAndAttributes,
 	HANDLE hTemplateFile
 );
-BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
-BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+BOOL ReadFile(
+	HANDLE hFile,
+	LPVOID lpBuffer,
+	DWORD nNumberOfBytesToRead,
+	LPDWORD lpNumberOfBytesRead,
+	LPOVERLAPPED lpOverlapped
+);
+BOOL WriteFile(
+	HANDLE hFile,
+	LPCVOID lpBuffer,
+	DWORD nNumberOfBytesToWrite,
+	LPDWORD lpNumberOfBytesWritten,
+	LPOVERLAPPED lpOverlapped
+);
 DWORD SetFilePointer(HANDLE hFile, LONG lDistanceToMove, LPLONG lpDistanceToMoveHigh, DWORD dwMoveMethod);
 DWORD GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh);
 DWORD GetFileAttributes(LPCSTR lpFileName);
@@ -548,7 +571,14 @@ DWORD GetFileAttributes(LPCSTR lpFileName);
 // --- Functions: registry ---
 LSTATUS RegOpenKey(HKEY hKey, LPCSTR lpSubKey, PHKEY phkResult);
 LSTATUS RegOpenKeyEx(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult);
-LSTATUS RegQueryValueEx(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData);
+LSTATUS RegQueryValueEx(
+	HKEY hKey,
+	LPCSTR lpValueName,
+	LPDWORD lpReserved,
+	LPDWORD lpType,
+	LPBYTE lpData,
+	LPDWORD lpcbData
+);
 LSTATUS RegCloseKey(HKEY hKey);
 
 // --- Functions: misc ---

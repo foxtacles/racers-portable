@@ -474,7 +474,11 @@ struct IDirect3DDevice3 : virtual public IUnknown {
 
 struct IDirect3D3 : virtual public IUnknown {
 	virtual HRESULT EnumDevices(LPD3DENUMDEVICESCALLBACK lpEnumDevicesCallback, LPVOID lpUserArg);
-	virtual HRESULT EnumZBufferFormats(REFCLSID riidDevice, LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback, LPVOID lpContext);
+	virtual HRESULT EnumZBufferFormats(
+		REFCLSID riidDevice,
+		LPD3DENUMPIXELFORMATSCALLBACK lpEnumCallback,
+		LPVOID lpContext
+	);
 	virtual HRESULT CreateDevice(
 		REFCLSID rclsid,
 		LPDIRECTDRAWSURFACE lpDDS,

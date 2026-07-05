@@ -254,7 +254,12 @@ struct DDBLTFX {
 typedef DDBLTFX* LPDDBLTFX;
 
 // --- Callbacks / creation ---
-typedef BOOL(CALLBACK* LPDDENUMCALLBACKA)(GUID* lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext);
+typedef BOOL(CALLBACK* LPDDENUMCALLBACKA)(
+	GUID* lpGUID,
+	LPSTR lpDriverDescription,
+	LPSTR lpDriverName,
+	LPVOID lpContext
+);
 typedef LPDDENUMCALLBACKA LPDDENUMCALLBACK;
 
 HRESULT DirectDrawEnumerate(LPDDENUMCALLBACKA lpCallback, LPVOID lpContext);
@@ -283,7 +288,13 @@ struct IDirectDrawSurface : virtual public IUnknown {
 	HRESULT QueryInterface(REFIID riid, void** ppvObject) override;
 
 	virtual HRESULT AddAttachedSurface(LPDIRECTDRAWSURFACE lpDDSAttachedSurface);
-	virtual HRESULT Blt(LPRECT lpDestRect, LPDIRECTDRAWSURFACE lpDDSrcSurface, LPRECT lpSrcRect, DWORD dwFlags, LPDDBLTFX lpDDBltFx);
+	virtual HRESULT Blt(
+		LPRECT lpDestRect,
+		LPDIRECTDRAWSURFACE lpDDSrcSurface,
+		LPRECT lpSrcRect,
+		DWORD dwFlags,
+		LPDDBLTFX lpDDBltFx
+	);
 	virtual HRESULT DeleteAttachedSurface(DWORD dwFlags, LPDIRECTDRAWSURFACE lpDDSAttachedSurface);
 	virtual HRESULT Flip(LPDIRECTDRAWSURFACE lpDDSurfaceTargetOverride, DWORD dwFlags);
 	virtual HRESULT GetAttachedSurface(LPDDSCAPS2 lpDDSCaps, LPDIRECTDRAWSURFACE* lplpDDAttachedSurface);
@@ -306,8 +317,17 @@ struct IDirectDraw : virtual public IUnknown {
 	HRESULT QueryInterface(REFIID riid, void** ppvObject) override;
 
 	virtual HRESULT CreateClipper(DWORD dwFlags, LPDIRECTDRAWCLIPPER* lplpDDClipper, IUnknown* pUnkOuter);
-	virtual HRESULT CreatePalette(DWORD dwFlags, LPPALETTEENTRY lpDDColorArray, LPDIRECTDRAWPALETTE* lplpDDPalette, IUnknown* pUnkOuter);
-	virtual HRESULT CreateSurface(LPDDSURFACEDESC2 lpDDSurfaceDesc, LPDIRECTDRAWSURFACE* lplpDDSurface, IUnknown* pUnkOuter);
+	virtual HRESULT CreatePalette(
+		DWORD dwFlags,
+		LPPALETTEENTRY lpDDColorArray,
+		LPDIRECTDRAWPALETTE* lplpDDPalette,
+		IUnknown* pUnkOuter
+	);
+	virtual HRESULT CreateSurface(
+		LPDDSURFACEDESC2 lpDDSurfaceDesc,
+		LPDIRECTDRAWSURFACE* lplpDDSurface,
+		IUnknown* pUnkOuter
+	);
 	virtual HRESULT GetCaps(LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps);
 	virtual HRESULT GetDisplayMode(LPDDSURFACEDESC lpDDSurfaceDesc);
 	virtual HRESULT RestoreDisplayMode();

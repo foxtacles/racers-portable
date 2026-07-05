@@ -44,7 +44,12 @@ HRESULT IDirectDrawPalette::GetEntries(DWORD dwFlags, DWORD dwBase, DWORD dwNumE
 	return DD_OK;
 }
 
-HRESULT IDirectDrawPalette::SetEntries(DWORD dwFlags, DWORD dwStartingEntry, DWORD dwCount, const PALETTEENTRY* lpEntries)
+HRESULT IDirectDrawPalette::SetEntries(
+	DWORD dwFlags,
+	DWORD dwStartingEntry,
+	DWORD dwCount,
+	const PALETTEENTRY* lpEntries
+)
 {
 	if (!lpEntries || dwStartingEntry + dwCount > 256) {
 		return DDERR_INVALIDPARAMS;

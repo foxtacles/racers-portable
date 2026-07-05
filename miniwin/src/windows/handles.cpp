@@ -1,6 +1,7 @@
 // [library:synchronization] Win32 mutex + generic handle lifetime over SDL3.
 
 #include "handles.h"
+
 #include "miniwin.h"
 
 #include <miniwin/windows.h>
