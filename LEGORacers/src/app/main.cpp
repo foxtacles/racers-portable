@@ -12,9 +12,8 @@
 #include <mmsystem.h>
 // clang-format on
 
-#include "app/main.h"
-
 #include "app/legoracers.h"
+#include "app/main.h"
 #include "decomp.h"
 #include "golerror.h"
 #include "types.h"
@@ -88,6 +87,7 @@ static int SDLCALL GameThread(void*)
 
 	int result = GameMain(g_commandLineArgs.m_argc, g_commandLineArgs.m_argv);
 
+	SDL_Log("Game loop finished (result %d)", result);
 	SDL_SetAtomicInt(&g_gameResult, result);
 	SDL_SetAtomicInt(&g_gameThreadDone, 1);
 	return result;

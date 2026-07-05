@@ -52,6 +52,21 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		}
 
 		bool mipmaps = (p_surface->m_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != 0;
+		if (getenv("RACERS_DUMP_TEX")) {
+			SDL_LogInfo(
+				LOG_CATEGORY_MINIWIN,
+				"upload tex id=%u %dx%d flags=0x%x bpp=%u aMask=0x%x key=%d(%u) pal=%d",
+				p_surface->m_backendTexture,
+				width,
+				height,
+				(unsigned) p_surface->m_desc.ddpfPixelFormat.dwFlags,
+				(unsigned) p_surface->m_desc.ddpfPixelFormat.dwRGBBitCount,
+				(unsigned) p_surface->m_desc.ddpfPixelFormat.dwRGBAlphaBitMask,
+				(int) p_surface->m_hasColorKey,
+				(unsigned) p_surface->m_colorKey.dwColorSpaceLowValue,
+				p_surface->m_palette != nullptr
+			);
+		}
 		if (p_surface->m_backendTexture == 0) {
 			p_surface->m_backendTexture = backend->CreateTexture(width, height, m_convertScratch.data(), mipmaps);
 		}
@@ -102,6 +117,16 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		}
 		state.textureLinear = m_textureStageStates[0][D3DTSS_MAGFILTER] != D3DTFG_POINT;
 		state.textureWrap = m_textureStageStates[0][D3DTSS_ADDRESS] != D3DTADDRESS_CLAMP;
+
+		// Color keying: keyed texels were converted to alpha 0 at upload; reject them
+		// at rasterization like the D3D6 colorkey path did.
+		if (state.textured && !state.alphaTest && m_renderStates[D3DRENDERSTATE_COLORKEYENABLE] &&
+			m_texture->m_hasColorKey) {
+			state.alphaTest = true;
+			state.alphaFunc = D3DCMP_GREATEREQUAL;
+			state.alphaRef = 0.5f;
+		}
+
 		return state;
 	}
 

@@ -41,6 +41,7 @@ in vec2 vUV;
 
 uniform sampler2D uTexture;
 uniform int uTextured;
+uniform int uSpecular; // D3DRENDERSTATE_SPECULARENABLE
 uniform int uAlphaFunc; // D3DCMPFUNC or 0 = disabled
 uniform float uAlphaRef;
 
@@ -52,7 +53,9 @@ void main()
 	if (uTextured != 0) {
 		color *= texture(uTexture, vUV);
 	}
-	color.rgb += vSpecular.rgb;
+	if (uSpecular != 0) {
+		color.rgb += vSpecular.rgb;
+	}
 
 	if (uAlphaFunc != 0) {
 		float a = color.a;
@@ -109,6 +112,7 @@ private:
 	GLuint m_ebo = 0;
 	GLint m_uViewport = -1;
 	GLint m_uTextured = -1;
+	GLint m_uSpecular = -1;
 	GLint m_uAlphaFunc = -1;
 	GLint m_uAlphaRef = -1;
 	Uint64 m_frameCounter = 0;
@@ -206,6 +210,7 @@ bool MiniwinGl3Backend::Init(SDL_Window* p_window)
 
 	m_uViewport = gl.glGetUniformLocation(m_program, "uViewport");
 	m_uTextured = gl.glGetUniformLocation(m_program, "uTextured");
+	m_uSpecular = gl.glGetUniformLocation(m_program, "uSpecular");
 	m_uAlphaFunc = gl.glGetUniformLocation(m_program, "uAlphaFunc");
 	m_uAlphaRef = gl.glGetUniformLocation(m_program, "uAlphaRef");
 
@@ -267,6 +272,23 @@ Uint32 MiniwinGl3Backend::CreateTexture(int p_width, int p_height, const void* p
 
 void MiniwinGl3Backend::UpdateTexture(Uint32 p_id, int p_width, int p_height, const void* p_rgba, bool p_mipmaps)
 {
+	static const char* dumpDir = getenv("RACERS_DUMP_TEX");
+	if (dumpDir && p_id <= 32) {
+		SDL_Surface* surface = SDL_CreateSurfaceFrom(
+			p_width,
+			p_height,
+			SDL_PIXELFORMAT_RGBA32,
+			const_cast<void*>(p_rgba),
+			p_width * 4
+		);
+		if (surface) {
+			char path[512];
+			SDL_snprintf(path, sizeof(path), "%s/tex%02u_%dx%d.bmp", dumpDir, (unsigned) p_id, p_width, p_height);
+			SDL_SaveBMP(surface, path);
+			SDL_DestroySurface(surface);
+		}
+	}
+
 	gl.glBindTexture(GL_TEXTURE_2D, p_id);
 	gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, p_width, p_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, p_rgba);
 	if (p_mipmaps) {
@@ -406,6 +428,7 @@ void MiniwinGl3Backend::ApplyState(const MiniwinRasterState& p_state)
 	}
 
 	gl.glUniform1i(m_uTextured, p_state.textured ? 1 : 0);
+	gl.glUniform1i(m_uSpecular, p_state.specular ? 1 : 0);
 	gl.glUniform1i(m_uAlphaFunc, p_state.alphaTest ? (int) p_state.alphaFunc : 0);
 	gl.glUniform1f(m_uAlphaRef, p_state.alphaRef);
 
@@ -451,6 +474,46 @@ void MiniwinGl3Backend::DrawTriangles(
 		);
 	}
 
+	static const char* traceEnv = getenv("RACERS_GL_TRACE");
+	if (traceEnv && m_frameCounter == (Uint64) SDL_atoi(traceEnv)) {
+		float minX = 1e9f, minY = 1e9f, maxX = -1e9f, maxY = -1e9f, minZ = 1e9f, maxZ = -1e9f;
+		for (Uint32 i = 0; i < p_vertexCount; i++) {
+			minX = SDL_min(minX, p_vertices[i].sx);
+			maxX = SDL_max(maxX, p_vertices[i].sx);
+			minY = SDL_min(minY, p_vertices[i].sy);
+			maxY = SDL_max(maxY, p_vertices[i].sy);
+			minZ = SDL_min(minZ, p_vertices[i].sz);
+			maxZ = SDL_max(maxZ, p_vertices[i].sz);
+		}
+		SDL_LogInfo(
+			LOG_CATEGORY_MINIWIN,
+			"trace draw: vtx=%u idx=%u tex=%u(%s) blend=%d(%d,%d) atest=%d z=%d zw=%d cull=%d "
+			"x[%.1f..%.1f] y[%.1f..%.1f] z[%.3f..%.3f] rhw0=%.4f c0=%08x c1=%08x uv0=(%.2f,%.2f)",
+			p_vertexCount,
+			p_indices ? p_indexCount : 0,
+			p_state.textureId,
+			p_state.textured ? "on" : "off",
+			(int) p_state.alphaBlend,
+			(int) p_state.srcBlend,
+			(int) p_state.destBlend,
+			(int) p_state.alphaTest,
+			(int) p_state.zEnable,
+			(int) p_state.zWrite,
+			(int) p_state.cullMode,
+			minX,
+			maxX,
+			minY,
+			maxY,
+			minZ,
+			maxZ,
+			p_vertices[0].rhw,
+			(unsigned) p_vertices[0].color,
+			p_vertexCount > 1 ? (unsigned) p_vertices[1].color : 0u,
+			p_vertices[0].tu,
+			p_vertices[0].tv
+		);
+	}
+
 	gl.glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 	gl.glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr) (p_vertexCount * sizeof(D3DTLVERTEX)), p_vertices, GL_STREAM_DRAW);
 
@@ -466,6 +529,63 @@ void MiniwinGl3Backend::DrawTriangles(
 	}
 	else {
 		gl.glDrawArrays(GL_TRIANGLES, 0, (GLsizei) p_vertexCount);
+	}
+
+	if (traceEnv && m_frameCounter == (Uint64) SDL_atoi(traceEnv)) {
+		GLenum err = gl.glGetError();
+		if (err) {
+			SDL_LogInfo(LOG_CATEGORY_MINIWIN, "trace draw: glGetError=0x%x", err);
+		}
+
+		float cx = 0.0f, cy = 0.0f;
+		for (Uint32 i = 0; i < p_vertexCount; i++) {
+			cx += p_vertices[i].sx;
+			cy += p_vertices[i].sy;
+		}
+		cx /= (float) p_vertexCount;
+		cy /= (float) p_vertexCount;
+
+		int dw = 0, dh = 0;
+		SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
+		int px = (int) (cx * dw / (float) m_width);
+		int py = dh - 1 - (int) (cy * dh / (float) m_height);
+		Uint8 pixel[4] = {0, 0, 0, 0};
+		gl.glReadPixels(px, py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+		SDL_LogInfo(
+			LOG_CATEGORY_MINIWIN,
+			"trace post: uv=[(%.3f,%.3f)(%.3f,%.3f)(%.3f,%.3f)(%.3f,%.3f)] idx=[%u %u %u %u %u %u] "
+			"fb@(%d,%d)=%02x%02x%02x%02x",
+			p_vertices[0].tu,
+			p_vertices[0].tv,
+			p_vertexCount > 1 ? p_vertices[1].tu : 0.f,
+			p_vertexCount > 1 ? p_vertices[1].tv : 0.f,
+			p_vertexCount > 2 ? p_vertices[2].tu : 0.f,
+			p_vertexCount > 2 ? p_vertices[2].tv : 0.f,
+			p_vertexCount > 3 ? p_vertices[3].tu : 0.f,
+			p_vertexCount > 3 ? p_vertices[3].tv : 0.f,
+			p_indices && p_indexCount > 0 ? p_indices[0] : 999,
+			p_indices && p_indexCount > 1 ? p_indices[1] : 999,
+			p_indices && p_indexCount > 2 ? p_indices[2] : 999,
+			p_indices && p_indexCount > 3 ? p_indices[3] : 999,
+			p_indices && p_indexCount > 4 ? p_indices[4] : 999,
+			p_indices && p_indexCount > 5 ? p_indices[5] : 999,
+			px,
+			py,
+			pixel[0],
+			pixel[1],
+			pixel[2],
+			pixel[3]
+		);
+
+		GLint boundTexture = -1;
+		gl.glGetIntegerv(GL_TEXTURE_BINDING_2D, &boundTexture);
+		SDL_LogInfo(
+			LOG_CATEGORY_MINIWIN,
+			"trace state: boundTex=%d spec=%d spec0=%08x",
+			boundTexture,
+			(int) p_state.specular,
+			(unsigned) p_vertices[0].specular
+		);
 	}
 }
 

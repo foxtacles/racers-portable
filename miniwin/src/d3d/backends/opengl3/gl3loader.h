@@ -58,6 +58,8 @@ typedef ptrdiff_t GLintptr;
 #define GL_SCISSOR_TEST 0x0C11
 #define GL_UNPACK_ALIGNMENT 0x0CF5
 #define GL_TEXTURE_2D 0x0DE1
+#define GL_TEXTURE_BINDING_2D 0x8069
+#define GL_CURRENT_PROGRAM 0x8B8D
 #define GL_UNSIGNED_BYTE 0x1401
 #define GL_UNSIGNED_SHORT 0x1403
 #define GL_UNSIGNED_INT 0x1405
@@ -88,6 +90,9 @@ typedef ptrdiff_t GLintptr;
 
 #define GL3_FUNCTION_LIST                                                                                              \
 	GL3_FUNC(const GLubyte*, glGetString, (GLenum name))                                                               \
+	GL3_FUNC(GLenum, glGetError, (void))                                                                               \
+	GL3_FUNC(void, glGetIntegerv, (GLenum pname, GLint* data))                                                         \
+	GL3_FUNC(void, glGetUniformiv, (GLuint program, GLint location, GLint* params))                                    \
 	GL3_FUNC(void, glEnable, (GLenum cap))                                                                             \
 	GL3_FUNC(void, glDisable, (GLenum cap))                                                                            \
 	GL3_FUNC(void, glClear, (GLbitfield mask))                                                                         \
