@@ -159,12 +159,73 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 	return SDL_APP_CONTINUE;
 }
 
+// Synthetic input for automated testing: RACERS_AUTOKEY="ms:scancode,ms:scancode,..."
+// injects a key press (down + up) of the given SDL scancode at each timestamp.
+static void PumpAutoKeys()
+{
+	static const char* spec = getenv("RACERS_AUTOKEY");
+	if (!spec || !spec[0]) {
+		return;
+	}
+
+	struct AutoKey {
+		Uint64 m_atMs;
+		SDL_Scancode m_scancode;
+		bool m_up;
+	};
+	static AutoKey keys[64];
+	static int keyCount = 0;
+	static int cursor = 0;
+	static Uint64 startMs = 0;
+
+	if (!startMs) {
+		startMs = SDL_GetTicks();
+		char buffer[512];
+		SDL_strlcpy(buffer, spec, sizeof(buffer));
+
+		char* savePtr = nullptr;
+		for (char* entry = SDL_strtok_r(buffer, ",", &savePtr); entry && keyCount + 2 <= (int) SDL_arraysize(keys);
+			 entry = SDL_strtok_r(nullptr, ",", &savePtr)) {
+			char* colon = SDL_strchr(entry, ':');
+			if (!colon) {
+				continue;
+			}
+			*colon = '\0';
+
+			Uint64 at = (Uint64) SDL_atoi(entry);
+			SDL_Scancode scancode = (SDL_Scancode) SDL_atoi(colon + 1);
+			keys[keyCount].m_atMs = at;
+			keys[keyCount].m_scancode = scancode;
+			keys[keyCount].m_up = false;
+			keyCount++;
+			keys[keyCount].m_atMs = at + 80;
+			keys[keyCount].m_scancode = scancode;
+			keys[keyCount].m_up = true;
+			keyCount++;
+		}
+	}
+
+	Uint64 elapsed = SDL_GetTicks() - startMs;
+	while (cursor < keyCount && keys[cursor].m_atMs <= elapsed) {
+		SDL_Event event;
+		SDL_zero(event);
+		event.type = keys[cursor].m_up ? SDL_EVENT_KEY_UP : SDL_EVENT_KEY_DOWN;
+		event.key.scancode = keys[cursor].m_scancode;
+		event.key.key = SDL_GetKeyFromScancode(keys[cursor].m_scancode, 0, false);
+		event.key.down = !keys[cursor].m_up;
+		event.key.repeat = false;
+		MiniwinApp_PushEvent(event);
+		cursor++;
+	}
+}
+
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
 	if (SDL_GetAtomicInt(&g_gameThreadDone)) {
 		return SDL_APP_SUCCESS;
 	}
 
+	PumpAutoKeys();
 	SDL_Delay(1);
 	return SDL_APP_CONTINUE;
 }

@@ -375,6 +375,8 @@ LegoS32 Win32GolApp::Tick(GolAppEventHandler* p_eventHandler)
 	// window procedure produced.
 	SDL_Event event;
 	while (MiniwinApp_PollEvent(event)) {
+		MiniwinInput_HandleEvent(event);
+
 		switch (event.type) {
 		case SDL_EVENT_QUIT:
 			// WM_QUIT equivalent.
