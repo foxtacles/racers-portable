@@ -32,6 +32,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
+# The decomp sources predate type-based alias analysis and rely on MSVC 6.0
+# semantics — e.g. GolList's overlapped head/sentinel pseudo-links alias
+# GolListLink and GolList fields onto the same memory. TBAA-driven reordering
+# corrupts those structures at -O1 and above, so build everything the way the
+# original compiler understood the code.
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  add_compile_options(-fno-strict-aliasing)
+endif()
+
 if (MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
 endif()
