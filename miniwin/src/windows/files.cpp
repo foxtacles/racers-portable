@@ -72,7 +72,14 @@ bool MiniwinResolvePath(const char* p_path, char* p_resolved, size_t p_resolvedS
 		}
 
 		char candidate[1024];
-		SDL_snprintf(candidate, sizeof(candidate), "%s%s%s", out, out[0] && out[SDL_strlen(out) - 1] != '/' ? "/" : "", component);
+		SDL_snprintf(
+			candidate,
+			sizeof(candidate),
+			"%s%s%s",
+			out,
+			out[0] && out[SDL_strlen(out) - 1] != '/' ? "/" : "",
+			component
+		);
 
 		if (access(candidate, F_OK) != 0) {
 			// Case-insensitive lookup in the parent directory.
@@ -150,7 +157,13 @@ HANDLE CreateFile(
 	return new MiniwinFileHandle(stream);
 }
 
-BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
+BOOL ReadFile(
+	HANDLE hFile,
+	LPVOID lpBuffer,
+	DWORD nNumberOfBytesToRead,
+	LPDWORD lpNumberOfBytesRead,
+	LPOVERLAPPED lpOverlapped
+)
 {
 	MiniwinHandle* handle = static_cast<MiniwinHandle*>(hFile);
 	if (!handle || handle == INVALID_HANDLE_VALUE || handle->type != MiniwinHandleType::File) {
@@ -168,7 +181,13 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD
 	return TRUE;
 }
 
-BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
+BOOL WriteFile(
+	HANDLE hFile,
+	LPCVOID lpBuffer,
+	DWORD nNumberOfBytesToWrite,
+	LPDWORD lpNumberOfBytesWritten,
+	LPOVERLAPPED lpOverlapped
+)
 {
 	MiniwinHandle* handle = static_cast<MiniwinHandle*>(hFile);
 	if (!handle || handle == INVALID_HANDLE_VALUE || handle->type != MiniwinHandleType::File) {
@@ -246,110 +265,111 @@ DWORD GetFileAttributes(LPCSTR lpFileName)
 
 #ifndef _WIN32
 
-extern "C" {
-
-int _open(const char* path, int oflag, int pmode)
+extern "C"
 {
-	MiniwinPhaseScope phase(MINIWIN_PHASE_FILE_IO);
-	MiniwinSlowOpLog slowLog("_open", path);
 
-	char resolved[1024];
-	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	int fd = open(resolved, oflag, (mode_t) pmode);
+	int _open(const char* path, int oflag, int pmode)
+	{
+		MiniwinPhaseScope phase(MINIWIN_PHASE_FILE_IO);
+		MiniwinSlowOpLog slowLog("_open", path);
 
-	static const char* fsLog = getenv("RACERS_FS_LOG");
-	if (fsLog) {
-		SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_open('%s' -> '%s') = %d", path, resolved, fd);
+		char resolved[1024];
+		MiniwinResolvePath(path, resolved, sizeof(resolved));
+		int fd = open(resolved, oflag, (mode_t) pmode);
+
+		static const char* fsLog = getenv("RACERS_FS_LOG");
+		if (fsLog) {
+			SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_open('%s' -> '%s') = %d", path, resolved, fd);
+		}
+
+		return fd;
 	}
 
-	return fd;
-}
-
-int _close(int fd)
-{
-	return close(fd);
-}
-
-int _read(int fd, void* buffer, unsigned int count)
-{
-	MiniwinPhaseScope phase(MINIWIN_PHASE_FILE_IO);
-	MiniwinSlowOpLog slowLog("_read", "");
-
-	int result = (int) read(fd, buffer, count);
-
-	static const char* fsLog = getenv("RACERS_FS_LOG");
-	static int logged = 0;
-	if (fsLog && logged < 40) {
-		logged++;
-		SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_read(fd=%d, %u) = %d", fd, count, result);
+	int _close(int fd)
+	{
+		return close(fd);
 	}
 
-	return result;
-}
+	int _read(int fd, void* buffer, unsigned int count)
+	{
+		MiniwinPhaseScope phase(MINIWIN_PHASE_FILE_IO);
+		MiniwinSlowOpLog slowLog("_read", "");
 
-int _write(int fd, const void* buffer, unsigned int count)
-{
-	return (int) write(fd, buffer, count);
-}
+		int result = (int) read(fd, buffer, count);
 
-long _lseek(int fd, long offset, int origin)
-{
-	return (long) lseek(fd, offset, origin);
-}
+		static const char* fsLog = getenv("RACERS_FS_LOG");
+		static int logged = 0;
+		if (fsLog && logged < 40) {
+			logged++;
+			SDL_LogInfo(LOG_CATEGORY_MINIWIN, "_read(fd=%d, %u) = %d", fd, count, result);
+		}
 
-long _tell(int fd)
-{
-	return (long) lseek(fd, 0, SEEK_CUR);
-}
-
-int _access(const char* path, int mode)
-{
-	char resolved[1024];
-	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	return access(resolved, mode == 0 ? F_OK : mode);
-}
-
-int _commit(int fd)
-{
-	return fsync(fd);
-}
-
-int _mkdir(const char* path)
-{
-	char resolved[1024];
-	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	return mkdir(resolved, 0755);
-}
-
-int _rmdir(const char* path)
-{
-	char resolved[1024];
-	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	return rmdir(resolved);
-}
-
-int _chdir(const char* path)
-{
-	char resolved[1024];
-	MiniwinResolvePath(path, resolved, sizeof(resolved));
-	return chdir(resolved);
-}
-
-char* _getcwd(char* buffer, int maxlen)
-{
-	return getcwd(buffer, (size_t) maxlen);
-}
-
-char* itoa(int value, char* str, int radix)
-{
-	if (radix == 16) {
-		SDL_snprintf(str, 33, "%x", value);
+		return result;
 	}
-	else {
-		SDL_snprintf(str, 33, "%d", value);
+
+	int _write(int fd, const void* buffer, unsigned int count)
+	{
+		return (int) write(fd, buffer, count);
 	}
-	return str;
-}
+
+	long _lseek(int fd, long offset, int origin)
+	{
+		return (long) lseek(fd, offset, origin);
+	}
+
+	long _tell(int fd)
+	{
+		return (long) lseek(fd, 0, SEEK_CUR);
+	}
+
+	int _access(const char* path, int mode)
+	{
+		char resolved[1024];
+		MiniwinResolvePath(path, resolved, sizeof(resolved));
+		return access(resolved, mode == 0 ? F_OK : mode);
+	}
+
+	int _commit(int fd)
+	{
+		return fsync(fd);
+	}
+
+	int _mkdir(const char* path)
+	{
+		char resolved[1024];
+		MiniwinResolvePath(path, resolved, sizeof(resolved));
+		return mkdir(resolved, 0755);
+	}
+
+	int _rmdir(const char* path)
+	{
+		char resolved[1024];
+		MiniwinResolvePath(path, resolved, sizeof(resolved));
+		return rmdir(resolved);
+	}
+
+	int _chdir(const char* path)
+	{
+		char resolved[1024];
+		MiniwinResolvePath(path, resolved, sizeof(resolved));
+		return chdir(resolved);
+	}
+
+	char* _getcwd(char* buffer, int maxlen)
+	{
+		return getcwd(buffer, (size_t) maxlen);
+	}
+
+	char* itoa(int value, char* str, int radix)
+	{
+		if (radix == 16) {
+			SDL_snprintf(str, 33, "%x", value);
+		}
+		else {
+			SDL_snprintf(str, 33, "%d", value);
+		}
+		return str;
+	}
 
 } // extern "C"
 

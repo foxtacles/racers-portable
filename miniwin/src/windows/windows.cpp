@@ -205,7 +205,13 @@ int GetSystemMetrics(int nIndex)
 
 // --- Dialogs (device picker) ---
 
-INT_PTR DialogBoxIndirectParam(HINSTANCE hInstance, LPCDLGTEMPLATE lpTemplate, HWND hWndParent, DLGPROC lpDialogFunc, LPARAM dwInitParam)
+INT_PTR DialogBoxIndirectParam(
+	HINSTANCE hInstance,
+	LPCDLGTEMPLATE lpTemplate,
+	HWND hWndParent,
+	DLGPROC lpDialogFunc,
+	LPARAM dwInitParam
+)
 {
 	// The -select3d device-picker dialog. miniwin exposes a single device, so the
 	// picker would be a no-op; report "cancel" and let the game use the default.
@@ -392,7 +398,14 @@ void Sleep(DWORD dwMilliseconds)
 	SDL_DelayPrecise((Uint64) dwMilliseconds * 1000000ull);
 }
 
-int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
+int MultiByteToWideChar(
+	UINT CodePage,
+	DWORD dwFlags,
+	LPCSTR lpMultiByteStr,
+	int cbMultiByte,
+	LPWSTR lpWideCharStr,
+	int cchWideChar
+)
 {
 	if (!lpMultiByteStr) {
 		return 0;

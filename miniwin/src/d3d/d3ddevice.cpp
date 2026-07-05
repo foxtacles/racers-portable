@@ -134,8 +134,8 @@ struct MiniwinD3DDevice : public IDirect3DDevice3 {
 		// based on the sampled texture alpha alone, like the D3D6 texel-level colorkey
 		// did. Gating on the combined alpha instead would erase whole draws whose
 		// vertex alpha fades below the threshold (e.g. the magnet's sparkle column).
-		state.colorKeyTest = state.textured && m_renderStates[D3DRENDERSTATE_COLORKEYENABLE] &&
-							 m_texture->m_hasColorKey;
+		state.colorKeyTest =
+			state.textured && m_renderStates[D3DRENDERSTATE_COLORKEYENABLE] && m_texture->m_hasColorKey;
 
 		return state;
 	}
