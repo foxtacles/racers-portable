@@ -4,6 +4,7 @@
 #include "miniwin.h"
 #include "renderbackend.h"
 
+#include <miniwin/miniwinapp.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -127,6 +128,25 @@ private:
 	GLint m_uSpecular = -1;
 	GLint m_uAlphaFunc = -1;
 	GLint m_uColorKey = -1;
+
+	// Drawable-space viewport with the logical aspect ratio letterboxed in.
+	int m_vpX = 0;
+	int m_vpY = 0;
+	int m_vpW = 0;
+	int m_vpH = 0;
+	int m_borderClearFrames = 0;
+
+	// Offscreen target for MINIWIN_RESOLUTION_ORIGINAL: the scene rasterizes at the
+	// logical resolution and is scaled up at present time.
+	GLuint m_sceneFbo = 0;
+	GLuint m_sceneColor = 0;
+	GLuint m_sceneDepth = 0;
+	int m_sceneFboW = 0;
+	int m_sceneFboH = 0;
+
+	bool UsesSceneFbo() const { return m_sceneFbo != 0; }
+	void EnsureSceneFbo();
+	void UpdateViewport();
 	GLint m_uAlphaRef = -1;
 	Uint64 m_frameCounter = 0;
 	Uint32 m_statDraws = 0;
@@ -256,12 +276,105 @@ bool MiniwinGl3Backend::Init(SDL_Window* p_window)
 	gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	gl.glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
+	UpdateViewport();
+
+	return true;
+}
+
+// Creates (or resizes) the logical-resolution offscreen target and leaves it bound
+// as the draw framebuffer.
+void MiniwinGl3Backend::EnsureSceneFbo()
+{
+	if (m_sceneFbo && m_sceneFboW == m_width && m_sceneFboH == m_height) {
+		gl.glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFbo);
+		return;
+	}
+
+	if (m_sceneFbo) {
+		gl.glDeleteFramebuffers(1, &m_sceneFbo);
+		gl.glDeleteTextures(1, &m_sceneColor);
+		gl.glDeleteRenderbuffers(1, &m_sceneDepth);
+		m_sceneFbo = m_sceneColor = m_sceneDepth = 0;
+	}
+
+	gl.glGenTextures(1, &m_sceneColor);
+	gl.glBindTexture(GL_TEXTURE_2D, m_sceneColor);
+	gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	gl.glGenRenderbuffers(1, &m_sceneDepth);
+	gl.glBindRenderbuffer(GL_RENDERBUFFER, m_sceneDepth);
+	gl.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, m_width, m_height);
+
+	gl.glGenFramebuffers(1, &m_sceneFbo);
+	gl.glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFbo);
+	gl.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_sceneColor, 0);
+	gl.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_sceneDepth);
+
+	if (gl.glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		MINIWIN_ERROR("scene framebuffer incomplete; falling back to native resolution");
+		gl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		gl.glDeleteFramebuffers(1, &m_sceneFbo);
+		gl.glDeleteTextures(1, &m_sceneColor);
+		gl.glDeleteRenderbuffers(1, &m_sceneDepth);
+		m_sceneFbo = m_sceneColor = m_sceneDepth = 0;
+		return;
+	}
+
+	m_sceneFboW = m_width;
+	m_sceneFboH = m_height;
+}
+
+// Fits the logical resolution into the drawable, letterboxing the difference (the
+// window can be any size in fullscreen). Keeps the GL viewport up to date and
+// schedules border clears for both swap-chain buffers after a change.
+void MiniwinGl3Backend::UpdateViewport()
+{
 	int dw = 0;
 	int dh = 0;
 	SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
-	gl.glViewport(0, 0, dw, dh);
+	if (dw <= 0 || dh <= 0 || m_width <= 0 || m_height <= 0) {
+		return;
+	}
 
-	return true;
+	int vpW = dw;
+	int vpH = dh;
+	if (MiniwinGetScaleMode() == MINIWIN_SCALE_LETTERBOX) {
+		vpH = (int) ((float) dw * (float) m_height / (float) m_width);
+		if (vpH > dh) {
+			vpH = dh;
+			vpW = (int) ((float) dh * (float) m_width / (float) m_height);
+		}
+	}
+	int vpX = (dw - vpW) / 2;
+	int vpY = (dh - vpH) / 2;
+
+	if (vpX != m_vpX || vpY != m_vpY || vpW != m_vpW || vpH != m_vpH) {
+		m_vpX = vpX;
+		m_vpY = vpY;
+		m_vpW = vpW;
+		m_vpH = vpH;
+		m_borderClearFrames = 3;
+	}
+
+	if (MiniwinGetRenderResolution() == MINIWIN_RESOLUTION_ORIGINAL) {
+		EnsureSceneFbo();
+	}
+	else if (m_sceneFbo) {
+		gl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		gl.glDeleteFramebuffers(1, &m_sceneFbo);
+		gl.glDeleteTextures(1, &m_sceneColor);
+		gl.glDeleteRenderbuffers(1, &m_sceneDepth);
+		m_sceneFbo = m_sceneColor = m_sceneDepth = 0;
+	}
+
+	if (UsesSceneFbo()) {
+		gl.glViewport(0, 0, m_width, m_height);
+	}
+	else {
+		gl.glViewport(m_vpX, m_vpY, m_vpW, m_vpH);
+	}
 }
 
 void MiniwinGl3Backend::Resize(int p_width, int p_height)
@@ -271,10 +384,7 @@ void MiniwinGl3Backend::Resize(int p_width, int p_height)
 	gl.glUseProgram(m_program);
 	gl.glUniform2f(m_uViewport, (GLfloat) m_width, (GLfloat) m_height);
 
-	int dw = 0;
-	int dh = 0;
-	SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
-	gl.glViewport(0, 0, dw, dh);
+	UpdateViewport();
 }
 
 Uint32 MiniwinGl3Backend::CreateTexture(int p_width, int p_height, const void* p_rgba, bool p_mipmaps)
@@ -328,21 +438,39 @@ void MiniwinGl3Backend::BeginScene()
 
 void MiniwinGl3Backend::Clear(const SDL_Rect* p_rect, float p_r, float p_g, float p_b, bool p_color, bool p_depth)
 {
-	int dw = 0;
-	int dh = 0;
-	SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
+	if (!UsesSceneFbo() && m_borderClearFrames > 0) {
+		m_borderClearFrames--;
+		int dw = 0;
+		int dh = 0;
+		SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
+		gl.glDisable(GL_SCISSOR_TEST);
+		gl.glViewport(0, 0, dw, dh);
+		gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		gl.glDepthMask(GL_TRUE);
+		gl.glClearDepth(1.0);
+		gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		gl.glViewport(m_vpX, m_vpY, m_vpW, m_vpH);
+	}
 
-	bool scissor = false;
+	// Scissor so partial clears stay inside their rect (and, without the offscreen
+	// target, inside the letterboxed viewport).
+	int outX = UsesSceneFbo() ? 0 : m_vpX;
+	int outY = UsesSceneFbo() ? 0 : m_vpY;
+	int outW = UsesSceneFbo() ? m_width : m_vpW;
+	int outH = UsesSceneFbo() ? m_height : m_vpH;
+	float sx = (float) outW / (float) m_width;
+	float sy = (float) outH / (float) m_height;
+	bool scissor = true;
+	gl.glEnable(GL_SCISSOR_TEST);
 	if (p_rect && (p_rect->x != 0 || p_rect->y != 0 || p_rect->w != m_width || p_rect->h != m_height)) {
-		float sx = (float) dw / (float) m_width;
-		float sy = (float) dh / (float) m_height;
-		int x = (int) (p_rect->x * sx);
+		int x = outX + (int) (p_rect->x * sx);
 		int w = (int) (p_rect->w * sx);
 		int h = (int) (p_rect->h * sy);
-		int y = dh - (int) ((p_rect->y + p_rect->h) * sy);
-		gl.glEnable(GL_SCISSOR_TEST);
+		int y = outY + outH - (int) ((p_rect->y + p_rect->h) * sy);
 		gl.glScissor(x, y, w, h);
-		scissor = true;
+	}
+	else {
+		gl.glScissor(outX, outY, outW, outH);
 	}
 
 	m_statClears++;
@@ -568,10 +696,8 @@ void MiniwinGl3Backend::DrawTriangles(
 		cx /= (float) p_vertexCount;
 		cy /= (float) p_vertexCount;
 
-		int dw = 0, dh = 0;
-		SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
-		int px = (int) (cx * dw / (float) m_width);
-		int py = dh - 1 - (int) (cy * dh / (float) m_height);
+		int px = m_vpX + (int) (cx * m_vpW / (float) m_width);
+		int py = m_vpY + m_vpH - 1 - (int) (cy * m_vpH / (float) m_height);
 		Uint8 pixel[4] = {0, 0, 0, 0};
 		gl.glReadPixels(px, py, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
 		SDL_LogInfo(
@@ -675,6 +801,7 @@ void MiniwinGl3Backend::HandleFrameDump()
 void MiniwinGl3Backend::Present()
 {
 	MiniwinPhaseScope phase(MINIWIN_PHASE_PRESENT);
+	UpdateViewport();
 	m_frameCounter++;
 
 	static const char* statsEnv = getenv("RACERS_GL_STATS");
@@ -728,24 +855,57 @@ void MiniwinGl3Backend::Present()
 
 	HandleFrameDump();
 
+	if (UsesSceneFbo()) {
+		int dw = 0;
+		int dh = 0;
+		SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
+		gl.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		gl.glDisable(GL_SCISSOR_TEST);
+		if (m_borderClearFrames > 0) {
+			m_borderClearFrames--;
+			gl.glViewport(0, 0, dw, dh);
+			gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			gl.glClear(GL_COLOR_BUFFER_BIT);
+		}
+		gl.glBindFramebuffer(GL_READ_FRAMEBUFFER, m_sceneFbo);
+		gl.glBlitFramebuffer(
+			0,
+			0,
+			m_width,
+			m_height,
+			m_vpX,
+			m_vpY,
+			m_vpX + m_vpW,
+			m_vpY + m_vpH,
+			GL_COLOR_BUFFER_BIT,
+			GL_LINEAR
+		);
+		gl.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	{
 		MiniwinSlowOpLog slowLog("SwapWindow", "");
 		SDL_GL_SwapWindow(m_window);
+	}
+
+	if (UsesSceneFbo()) {
+		gl.glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFbo);
 	}
 }
 
 SDL_Surface* MiniwinGl3Backend::ReadBackbuffer()
 {
-	int dw = 0;
-	int dh = 0;
-	SDL_GetWindowSizeInPixels(m_window, &dw, &dh);
+	int dw = UsesSceneFbo() ? m_width : m_vpW;
+	int dh = UsesSceneFbo() ? m_height : m_vpH;
+	int rx = UsesSceneFbo() ? 0 : m_vpX;
+	int ry = UsesSceneFbo() ? 0 : m_vpY;
 
 	SDL_Surface* surface = SDL_CreateSurface(dw, dh, SDL_PIXELFORMAT_ABGR8888);
 	if (!surface) {
 		return nullptr;
 	}
 
-	gl.glReadPixels(0, 0, dw, dh, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+	gl.glReadPixels(rx, ry, dw, dh, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
 
 	// Flip vertically (GL reads bottom-up).
 	int pitch = surface->pitch;

@@ -28,6 +28,24 @@ inline void MiniwinApp_RunOnMainThread(F&& p_fn)
 // Seeds the emulated registry's LangID value (--language command-line argument).
 void MiniwinSetRegistryLangId(DWORD p_langId);
 
+// Fullscreen/window scaling of the logical resolution: preserve aspect ratio with
+// black bars (default) or stretch to fill the drawable.
+enum MiniwinScaleMode {
+	MINIWIN_SCALE_LETTERBOX = 0,
+	MINIWIN_SCALE_STRETCH = 1,
+};
+void MiniwinSetScaleMode(MiniwinScaleMode p_mode);
+MiniwinScaleMode MiniwinGetScaleMode();
+
+// Internal rasterization resolution: the native drawable size (default) or the
+// game's original logical resolution (640x480) upscaled at present time.
+enum MiniwinRenderResolution {
+	MINIWIN_RESOLUTION_NATIVE = 0,
+	MINIWIN_RESOLUTION_ORIGINAL = 1,
+};
+void MiniwinSetRenderResolution(MiniwinRenderResolution p_resolution);
+MiniwinRenderResolution MiniwinGetRenderResolution();
+
 // Configures SDL window attributes required by the render backend; returns extra
 // SDL_WindowFlags to OR into SDL_CreateWindow. Main thread, before window creation.
 Uint32 MiniwinBackend_PrepareWindowFlags();

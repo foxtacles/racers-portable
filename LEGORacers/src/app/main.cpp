@@ -98,6 +98,8 @@ static void DisplayArgumentHelp()
 	SDL_Log("racers-portable options:");
 	SDL_Log("  --path <directory>   game data directory (LEGO.JAM, *.TUN, *.AVI)");
 	SDL_Log("  --language <index>   language index (seeds the emulated registry LangID)");
+	SDL_Log("  --scale <mode>       fullscreen scaling: letterbox (default) or stretch");
+	SDL_Log("  --resolution <mode>  render at native (default) or original (640x480) resolution");
 	SDL_Log("  --help               show this help");
 	SDL_Log("Original game options (passed through):");
 	SDL_Log("  -novideo -window -primary -select3d -alphatrans -horzres <n> -vertres <n>");
@@ -125,6 +127,26 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 		}
 		if (SDL_strcmp(argv[i], "--language") == 0 && i + 1 < argc) {
 			MiniwinSetRegistryLangId((DWORD) SDL_atoi(argv[i + 1]));
+			i++;
+			continue;
+		}
+		if (SDL_strcmp(argv[i], "--resolution") == 0 && i + 1 < argc) {
+			if (SDL_strcmp(argv[i + 1], "original") == 0) {
+				MiniwinSetRenderResolution(MINIWIN_RESOLUTION_ORIGINAL);
+			}
+			else {
+				MiniwinSetRenderResolution(MINIWIN_RESOLUTION_NATIVE);
+			}
+			i++;
+			continue;
+		}
+		if (SDL_strcmp(argv[i], "--scale") == 0 && i + 1 < argc) {
+			if (SDL_strcmp(argv[i + 1], "stretch") == 0) {
+				MiniwinSetScaleMode(MINIWIN_SCALE_STRETCH);
+			}
+			else {
+				MiniwinSetScaleMode(MINIWIN_SCALE_LETTERBOX);
+			}
 			i++;
 			continue;
 		}
@@ -229,8 +251,31 @@ static void PumpAutoKeys()
 		}
 	}
 
+	static SDL_Keymod heldMods = SDL_KMOD_NONE;
+
 	Uint64 elapsed = SDL_GetTicks() - startMs;
 	while (cursor < keyCount && keys[cursor].m_atMs <= elapsed) {
+		SDL_Keymod mod = SDL_KMOD_NONE;
+		switch (keys[cursor].m_scancode) {
+		case SDL_SCANCODE_LALT:
+			mod = SDL_KMOD_LALT;
+			break;
+		case SDL_SCANCODE_LCTRL:
+			mod = SDL_KMOD_LCTRL;
+			break;
+		case SDL_SCANCODE_LSHIFT:
+			mod = SDL_KMOD_LSHIFT;
+			break;
+		default:
+			break;
+		}
+		if (keys[cursor].m_up) {
+			heldMods = (SDL_Keymod) (heldMods & ~mod);
+		}
+		else {
+			heldMods = (SDL_Keymod) (heldMods | mod);
+		}
+
 		SDL_Event event;
 		SDL_zero(event);
 		event.type = keys[cursor].m_up ? SDL_EVENT_KEY_UP : SDL_EVENT_KEY_DOWN;
@@ -238,6 +283,7 @@ static void PumpAutoKeys()
 		event.key.key = SDL_GetKeyFromScancode(keys[cursor].m_scancode, 0, false);
 		event.key.down = !keys[cursor].m_up;
 		event.key.repeat = false;
+		event.key.mod = heldMods;
 		MiniwinApp_PushEvent(event);
 		cursor++;
 	}

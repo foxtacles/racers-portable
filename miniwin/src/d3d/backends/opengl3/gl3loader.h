@@ -58,6 +58,14 @@ typedef ptrdiff_t GLintptr;
 #define GL_SCISSOR_TEST 0x0C11
 #define GL_UNPACK_ALIGNMENT 0x0CF5
 #define GL_TEXTURE_2D 0x0DE1
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_READ_FRAMEBUFFER 0x8CA8
+#define GL_DRAW_FRAMEBUFFER 0x8CA9
+#define GL_RENDERBUFFER 0x8D41
+#define GL_COLOR_ATTACHMENT0 0x8CE0
+#define GL_DEPTH_ATTACHMENT 0x8D00
+#define GL_DEPTH_COMPONENT24 0x81A6
+#define GL_FRAMEBUFFER_COMPLETE 0x8CD5
 #define GL_TEXTURE_BINDING_2D 0x8069
 #define GL_CURRENT_PROGRAM 0x8B8D
 #define GL_UNSIGNED_BYTE 0x1401
@@ -90,9 +98,9 @@ typedef ptrdiff_t GLintptr;
 
 #define GL3_FUNCTION_LIST                                                                                              \
 	GL3_FUNC(const GLubyte*, glGetString, (GLenum name))                                                               \
-	GL3_FUNC(GLenum, glGetError, (void))                                                                               \
-	GL3_FUNC(void, glGetIntegerv, (GLenum pname, GLint* data))                                                         \
-	GL3_FUNC(void, glGetUniformiv, (GLuint program, GLint location, GLint* params))                                    \
+	GL3_FUNC(GLenum, glGetError, (void) )                                                                              \
+	GL3_FUNC(void, glGetIntegerv, (GLenum pname, GLint * data))                                                        \
+	GL3_FUNC(void, glGetUniformiv, (GLuint program, GLint location, GLint * params))                                   \
 	GL3_FUNC(void, glEnable, (GLenum cap))                                                                             \
 	GL3_FUNC(void, glDisable, (GLenum cap))                                                                            \
 	GL3_FUNC(void, glClear, (GLbitfield mask))                                                                         \
@@ -107,38 +115,86 @@ typedef ptrdiff_t GLintptr;
 	GL3_FUNC(void, glFrontFace, (GLenum mode))                                                                         \
 	GL3_FUNC(void, glPixelStorei, (GLenum pname, GLint param))                                                         \
 	GL3_FUNC(void, glReadPixels, (GLint x, GLint y, GLsizei w, GLsizei h, GLenum format, GLenum type, void* pixels))   \
-	GL3_FUNC(void, glGenTextures, (GLsizei n, GLuint* textures))                                                       \
+	GL3_FUNC(void, glGenTextures, (GLsizei n, GLuint * textures))                                                      \
 	GL3_FUNC(void, glDeleteTextures, (GLsizei n, const GLuint* textures))                                              \
 	GL3_FUNC(void, glBindTexture, (GLenum target, GLuint texture))                                                     \
-	GL3_FUNC(void, glTexImage2D, (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels)) \
+	GL3_FUNC(                                                                                                          \
+		void,                                                                                                          \
+		glTexImage2D,                                                                                                  \
+		(GLenum target,                                                                                                \
+		 GLint level,                                                                                                  \
+		 GLint internalformat,                                                                                         \
+		 GLsizei width,                                                                                                \
+		 GLsizei height,                                                                                               \
+		 GLint border,                                                                                                 \
+		 GLenum format,                                                                                                \
+		 GLenum type,                                                                                                  \
+		 const void* pixels)                                                                                           \
+	)                                                                                                                  \
 	GL3_FUNC(void, glTexParameteri, (GLenum target, GLenum pname, GLint param))                                        \
 	GL3_FUNC(void, glGenerateMipmap, (GLenum target))                                                                  \
 	GL3_FUNC(void, glActiveTexture, (GLenum texture))                                                                  \
 	GL3_FUNC(GLuint, glCreateShader, (GLenum type))                                                                    \
 	GL3_FUNC(void, glShaderSource, (GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length))   \
 	GL3_FUNC(void, glCompileShader, (GLuint shader))                                                                   \
-	GL3_FUNC(void, glGetShaderiv, (GLuint shader, GLenum pname, GLint* params))                                        \
-	GL3_FUNC(void, glGetShaderInfoLog, (GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog))             \
-	GL3_FUNC(GLuint, glCreateProgram, (void))                                                                          \
+	GL3_FUNC(void, glGetShaderiv, (GLuint shader, GLenum pname, GLint * params))                                       \
+	GL3_FUNC(void, glGetShaderInfoLog, (GLuint shader, GLsizei bufSize, GLsizei * length, GLchar * infoLog))           \
+	GL3_FUNC(GLuint, glCreateProgram, (void) )                                                                         \
 	GL3_FUNC(void, glAttachShader, (GLuint program, GLuint shader))                                                    \
 	GL3_FUNC(void, glLinkProgram, (GLuint program))                                                                    \
-	GL3_FUNC(void, glGetProgramiv, (GLuint program, GLenum pname, GLint* params))                                      \
-	GL3_FUNC(void, glGetProgramInfoLog, (GLuint program, GLsizei bufSize, GLsizei* length, GLchar* infoLog))           \
+	GL3_FUNC(void, glGetProgramiv, (GLuint program, GLenum pname, GLint * params))                                     \
+	GL3_FUNC(void, glGetProgramInfoLog, (GLuint program, GLsizei bufSize, GLsizei * length, GLchar * infoLog))         \
 	GL3_FUNC(void, glUseProgram, (GLuint program))                                                                     \
 	GL3_FUNC(void, glDeleteShader, (GLuint shader))                                                                    \
 	GL3_FUNC(GLint, glGetUniformLocation, (GLuint program, const GLchar* name))                                        \
 	GL3_FUNC(void, glUniform1i, (GLint location, GLint v0))                                                            \
 	GL3_FUNC(void, glUniform1f, (GLint location, GLfloat v0))                                                          \
 	GL3_FUNC(void, glUniform2f, (GLint location, GLfloat v0, GLfloat v1))                                              \
-	GL3_FUNC(void, glGenVertexArrays, (GLsizei n, GLuint* arrays))                                                     \
+	GL3_FUNC(void, glGenVertexArrays, (GLsizei n, GLuint * arrays))                                                    \
 	GL3_FUNC(void, glBindVertexArray, (GLuint array))                                                                  \
-	GL3_FUNC(void, glGenBuffers, (GLsizei n, GLuint* buffers))                                                         \
+	GL3_FUNC(void, glGenBuffers, (GLsizei n, GLuint * buffers))                                                        \
 	GL3_FUNC(void, glBindBuffer, (GLenum target, GLuint buffer))                                                       \
 	GL3_FUNC(void, glBufferData, (GLenum target, GLsizeiptr size, const void* data, GLenum usage))                     \
-	GL3_FUNC(void, glVertexAttribPointer, (GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer)) \
+	GL3_FUNC(                                                                                                          \
+		void,                                                                                                          \
+		glVertexAttribPointer,                                                                                         \
+		(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer)             \
+	)                                                                                                                  \
 	GL3_FUNC(void, glEnableVertexAttribArray, (GLuint index))                                                          \
 	GL3_FUNC(void, glDrawElements, (GLenum mode, GLsizei count, GLenum type, const void* indices))                     \
-	GL3_FUNC(void, glDrawArrays, (GLenum mode, GLint first, GLsizei count))
+	GL3_FUNC(void, glDrawArrays, (GLenum mode, GLint first, GLsizei count))                                            \
+	GL3_FUNC(void, glGenFramebuffers, (GLsizei n, GLuint * framebuffers))                                              \
+	GL3_FUNC(void, glDeleteFramebuffers, (GLsizei n, const GLuint* framebuffers))                                      \
+	GL3_FUNC(void, glBindFramebuffer, (GLenum target, GLuint framebuffer))                                             \
+	GL3_FUNC(                                                                                                          \
+		void,                                                                                                          \
+		glFramebufferTexture2D,                                                                                        \
+		(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)                              \
+	)                                                                                                                  \
+	GL3_FUNC(void, glGenRenderbuffers, (GLsizei n, GLuint * renderbuffers))                                            \
+	GL3_FUNC(void, glDeleteRenderbuffers, (GLsizei n, const GLuint* renderbuffers))                                    \
+	GL3_FUNC(void, glBindRenderbuffer, (GLenum target, GLuint renderbuffer))                                           \
+	GL3_FUNC(void, glRenderbufferStorage, (GLenum target, GLenum internalformat, GLsizei width, GLsizei height))       \
+	GL3_FUNC(                                                                                                          \
+		void,                                                                                                          \
+		glFramebufferRenderbuffer,                                                                                     \
+		(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)                             \
+	)                                                                                                                  \
+	GL3_FUNC(GLenum, glCheckFramebufferStatus, (GLenum target))                                                        \
+	GL3_FUNC(                                                                                                          \
+		void,                                                                                                          \
+		glBlitFramebuffer,                                                                                             \
+		(GLint srcX0,                                                                                                  \
+		 GLint srcY0,                                                                                                  \
+		 GLint srcX1,                                                                                                  \
+		 GLint srcY1,                                                                                                  \
+		 GLint dstX0,                                                                                                  \
+		 GLint dstY0,                                                                                                  \
+		 GLint dstX1,                                                                                                  \
+		 GLint dstY1,                                                                                                  \
+		 GLbitfield mask,                                                                                              \
+		 GLenum filter)                                                                                                \
+	)
 
 #define GL3_FUNC(ret, name, args) typedef ret(SDLCALL* name##_t) args;
 GL3_FUNCTION_LIST

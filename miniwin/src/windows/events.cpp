@@ -18,6 +18,30 @@ static SDL_Mutex* g_queueMutex;
 static std::vector<QueuedEvent> g_queue;
 static size_t g_queueHead;
 
+static MiniwinScaleMode g_scaleMode = MINIWIN_SCALE_LETTERBOX;
+
+void MiniwinSetScaleMode(MiniwinScaleMode p_mode)
+{
+	g_scaleMode = p_mode;
+}
+
+MiniwinScaleMode MiniwinGetScaleMode()
+{
+	return g_scaleMode;
+}
+
+static MiniwinRenderResolution g_renderResolution = MINIWIN_RESOLUTION_NATIVE;
+
+void MiniwinSetRenderResolution(MiniwinRenderResolution p_resolution)
+{
+	g_renderResolution = p_resolution;
+}
+
+MiniwinRenderResolution MiniwinGetRenderResolution()
+{
+	return g_renderResolution;
+}
+
 SDL_AtomicInt g_miniwinHeartbeat;
 SDL_AtomicInt g_miniwinPhase;
 
