@@ -385,7 +385,11 @@ LPSTR lstrcat(LPSTR lpString1, LPCSTR lpString2)
 
 void Sleep(DWORD dwMilliseconds)
 {
-	SDL_Delay(dwMilliseconds);
+	// The game's frame limiter sleeps for the remainder of the 12 ms frame budget.
+	// SDL_Delay overshoots by several milliseconds on macOS, dragging the frame rate
+	// well below the original's ~83 FPS cap; the original ran with timeBeginPeriod(1)
+	// precision, which SDL_DelayPrecise matches.
+	SDL_DelayPrecise((Uint64) dwMilliseconds * 1000000ull);
 }
 
 int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)

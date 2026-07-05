@@ -105,6 +105,11 @@ static void DisplayArgumentHelp()
 
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 {
+	// The game thread owns the GL context; without async dispatch, macOS CGL context
+	// updates block the swapping thread until the main thread runs, which shows up as
+	// random multi-hundred-ms frame stalls.
+	SDL_SetHint(SDL_HINT_MAC_OPENGL_ASYNC_DISPATCH, "1");
+
 	if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC | SDL_INIT_EVENTS)) {
 		SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init failed: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
