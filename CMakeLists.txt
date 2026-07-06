@@ -26,6 +26,7 @@ endif()
 include(CheckCXXSourceCompiles)
 include(CMakeDependentOption)
 include(FetchContent)
+include(GenerateExportHeader)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -135,6 +136,10 @@ target_include_directories(goldp PRIVATE
   "${PROJECT_SOURCE_DIR}/common/include"
   "${PROJECT_SOURCE_DIR}/util"
 )
+generate_export_header(goldp BASE_NAME GOLDP EXPORT_MACRO_NAME GOLDP_EXPORT_INNER EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/goldp_export_inner.h")
+target_include_directories(goldp PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/GolDP")
+set_property(TARGET goldp PROPERTY C_VISIBILITY_PRESET hidden)
+set_property(TARGET goldp PROPERTY CXX_VISIBILITY_PRESET hidden)
 target_link_libraries(goldp PRIVATE miniwin SDL3::SDL3)
 if (WIN32 AND BUILD_SHARED_LIBS)
   target_sources(goldp PRIVATE GolDP/GolDP.def)
@@ -167,4 +172,69 @@ if (RACERS_BUILD_APP)
     set_property(SOURCE LEGORacers/racers.rc APPEND PROPERTY OBJECT_DEPENDS "${PROJECT_SOURCE_DIR}/LEGORacers/resources/racers.ico")
   endif()
   set_property(TARGET legoracers PROPERTY OUTPUT_NAME "LEGORacers")
+endif()
+
+find_program(CLANGFORMAT_BIN NAMES clang-format)
+if (EXISTS "${CLANGFORMAT_BIN}")
+  execute_process(COMMAND "${CLANGFORMAT_BIN}" --version
+    OUTPUT_VARIABLE "CLANGFORMAT_VERSION_OUTPUT"
+    RESULT_VARIABLE "CLANGFORMAT_RESULT"
+  )
+  if (CLANGFORMAT_RESULT EQUAL 0 AND CLANGFORMAT_VERSION_OUTPUT MATCHES "version ([0-9\\.]+)")
+    set(CLANGFORMAT_VERSION "${CMAKE_MATCH_1}")
+    set(CLANGFORMAT_VERSION_REQUIRED "17.0")
+    message(DEBUG "Found clang-format version ${CLANGFORMAT_VERSION} (needs ${CLANGFORMAT_VERSION_REQUIRED}")
+    if (CLANGFORMAT_VERSION VERSION_GREATER_EQUAL "${CLANGFORMAT_VERSION_REQUIRED}")
+      file(GLOB_RECURSE racers_sources CONFIGURE_DEPENDS
+        "${PROJECT_SOURCE_DIR}/LEGORacers/*.cpp"
+        "${PROJECT_SOURCE_DIR}/LEGORacers/*.h"
+        "${PROJECT_SOURCE_DIR}/GolDP/*.cpp"
+        "${PROJECT_SOURCE_DIR}/GolDP/*.h"
+        "${PROJECT_SOURCE_DIR}/common/*.cpp"
+        "${PROJECT_SOURCE_DIR}/common/*.h"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/d3d/backends/opengl3/*.h"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/d3d/backends/opengl3/*.cpp"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/d3d/*.h"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/d3d/*.cpp"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/ddraw/*.h"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/ddraw/*.cpp"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/dinput/*.cpp"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/dsound/*.cpp"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/internal/*.h"
+        "${PROJECT_SOURCE_DIR}/miniwin/src/windows/*.cpp"
+      )
+      string(REPLACE ";" "\n" racers_sources_lines "${racers_sources}")
+      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/racers_sources.txt" "${racers_sources_lines}\n")
+      add_custom_target(clang-format ${CLANGFORMAT_BIN} -i "--files=${CMAKE_CURRENT_BINARY_DIR}/racers_sources.txt")
+    endif()
+  endif()
+endif()
+
+find_library(CLANG_LIBRARY NAMES "clang" DOC "libclang from host (NOT target) system")
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if (CLANG_LIBRARY AND TARGET Python3::Interpreter)
+  add_custom_target(ncc
+    Python3::Interpreter "${PROJECT_SOURCE_DIR}/tools/ncc/ncc.py"
+      --clang-lib "${CLANG_LIBRARY}"
+      --recurse
+      --style tools/ncc/ncc.style
+      --skip tools/ncc/skip.yml
+      --definition DEFINE_GUID PASCAL WINAPI FAR BOOL CALLBACK HWND__=HWND SDLCALL GOLDP_EXPORT_INNER=
+      --include
+        util
+        LEGORacers/include
+        LEGORacers
+        GolDP/include
+        GolDP
+        common/include
+        common
+      --exclude
+        LEGORacers/src/app/main.cpp
+        LEGORacers/src/video/avireader.cpp
+        LEGORacers/src/video/videoplayer.cpp
+        LEGORacers/include/video/avireader.h
+      --path LEGORacers GolDP common
+    COMMENT "Verifying naming conventions (ncc)"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+  )
 endif()
