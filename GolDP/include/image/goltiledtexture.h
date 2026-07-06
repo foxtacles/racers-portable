@@ -12,7 +12,6 @@
 class GolD3DRenderDevice;
 class GolD3DTexture;
 
-// SIZE 0x04
 // VTABLE: GOLDP 0x10056ee4
 // SIZE 0x50
 class GOLDP_EXPORT GolTiledTexture {
