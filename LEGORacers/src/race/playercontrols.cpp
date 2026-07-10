@@ -5,6 +5,7 @@
 #include "race/powerups/racepowerupmanager.h"
 #include "race/racer/racer.h"
 
+#include <miniwin/touch.h>
 #include <string.h>
 
 DECOMP_SIZE_ASSERT(PlayerControls, 0x74)
@@ -55,6 +56,10 @@ PlayerControls::~PlayerControls()
 // FUNCTION: LEGORACERS 0x004300a0
 void PlayerControls::Destroy()
 {
+	// [library:input] Touch ownership is released with its player (idempotent;
+	// Destroy runs from both RaceSession::DestroyInput and the destructor).
+	MiniwinTouch_ReleasePlayer(this);
+
 	m_input.Destroy();
 
 	m_racer = NULL;
@@ -72,6 +77,10 @@ void PlayerControls::Initialize(Racer* p_racer, InputDevice::Callback* p_fallbac
 	m_racer = p_racer;
 	m_input.Initialize(this, p_fallback);
 	Reset();
+
+	// [library:input] The first player initialized each session owns touch input
+	// (player 0; the session setup loop initializes players in index order).
+	MiniwinTouch_ClaimPlayer(this);
 }
 
 // FUNCTION: LEGORACERS 0x00430100
@@ -153,6 +162,14 @@ void PlayerControls::UpdateSteering(LegoU32 p_elapsedMs)
 			analogValue = g_minSoundPan;
 		}
 
+		// [library:input] Touch drag steering overrides the analog axis while a steer
+		// finger is down (player 0; ownership claimed in Initialize). The value is
+		// already in [-1, 1] and the rate shaping below applies unchanged.
+		float touchSteer;
+		if (MiniwinTouch_GetSteer(this, &touchSteer)) {
+			analogValue = touchSteer;
+		}
+
 		if (analogValue > 0.0f) {
 			limitPositive = analogValue;
 			if (m_input.m_steering < 0.0f) {
@@ -219,7 +236,12 @@ void PlayerControls::UpdateThrottle()
 	LegoFloat reverseValue = 0.0f;
 	DirectInputDevice* source;
 
-	m_input.GetBinding(&source, 2);
+	// [library:input] Read the throttle axis from the steer slot's device (always the
+	// gamepad on a joystick binding), not the throttle slot's: rebinding a button that
+	// collides with the hidden accel/brake defaults makes the game refill slot 2 with a
+	// keyboard event (entry 0) or nothing, and the original slot-2 read would then poll
+	// an axis-less device and stick throttle would silently die.
+	m_input.GetBinding(&source, 0);
 	if (m_input.m_analogThrottle) {
 		LegoFloat analogValue = -source->GetAxisValue(2);
 		if (analogValue < 0.0f) {
@@ -286,6 +308,35 @@ void PlayerControls::UpdateThrottle()
 // FUNCTION: LEGORACERS 0x00430530
 void PlayerControls::Update(LegoU32 p_elapsedMs)
 {
+	// [library:input] Touch race buttons: apply edge transitions (the On* side effects
+	// are edge-triggered; the touch layer freezes its edge tracking while this gate is
+	// closed and reports the flips when control returns). Bit order matches
+	// MINIWIN_TOUCH_*.
+	unsigned touchPressed;
+	unsigned touchReleased;
+	if (MiniwinTouch_PollRaceButtons(
+			this,
+			m_input.m_enabled && !(m_input.m_stateFlags & c_stateAiControl),
+			&touchPressed,
+			&touchReleased
+		)) {
+		void (PlayerControls::* const handlers[])(LegoBool32) = {
+			&PlayerControls::OnThrottle,
+			&PlayerControls::OnBrake,
+			&PlayerControls::OnUsePowerup,
+			&PlayerControls::OnDrift,
+			&PlayerControls::OnLookBack,
+		};
+		for (LegoU32 i = 0; i < sizeOfArray(handlers); i++) {
+			if (touchPressed & (1u << i)) {
+				(this->*handlers[i])(TRUE);
+			}
+			if (touchReleased & (1u << i)) {
+				(this->*handlers[i])(FALSE);
+			}
+		}
+	}
+
 	LegoU32 duration = m_input.m_boostWindowMs;
 	if (duration < p_elapsedMs) {
 		m_input.m_boostWindowMs = 0;
@@ -480,6 +531,20 @@ LegoS32 PlayerControls::DetectAnalogDevice()
 {
 	LegoS32 result = ::strcmp(m_input.m_devices[4]->GetDeviceName(), g_sideWinderForceFeedName);
 	if (!result) {
+		m_input.m_analogThrottle = TRUE;
+	}
+
+	// [library:input] The original only trusted its SideWinder whitelist with an
+	// analog Y axis; every SDL gamepad has one. Enable analog throttle (stick
+	// forward/back in UpdateThrottle) whenever the steer slot reads a joystick, so
+	// one thumbstick drives steering and speed together. The steer slot is the
+	// anchor because the throttle slot's device is not stable: rebinding a button
+	// that collides with the hidden accel/brake defaults refills slot 2 with a
+	// keyboard event (entry 0's fallback) or clears it, which must not turn the
+	// stick throttle off.
+	DirectInputDevice* throttleSource;
+	m_input.GetBinding(&throttleSource, 0);
+	if (throttleSource && throttleSource->GetDeviceType() == 4) {
 		m_input.m_analogThrottle = TRUE;
 	}
 
