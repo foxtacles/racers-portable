@@ -16,11 +16,12 @@ static VisualStateColor g_singleRaceVisualStates[] = {
 	{{0xff00dfff}},
 	{{0xffb4dce6}},
 	{{0xffdf3d25}},
+	{{0x1f1fdaff}},
 };
 
 // GLOBAL: LEGORACERS 0x004c228c
 static LegoU8 g_singleRaceVisualStateMap[] = {
-	1, 0, 3, 2, 1, 0, 3, 2, 0, 1, 2, 3, 2, 0, 3, 1, 2, 0, 3, 1, 3, 1, 2, 0,
+	1, 0, 3, 2, 1, 0, 3, 2, 0, 1, 2, 3, 2, 0, 3, 1, 2, 0, 3, 1, 3, 1, 2, 0, 4,
 };
 
 // FUNCTION: LEGORACERS 0x00488750
@@ -183,14 +184,5 @@ void SingleRaceSelectBase::SetPreviewDriver(const LegoChar* p_name)
 // FUNCTION: LEGORACERS 0x00488cb0
 void SingleRaceSelectBase::ApplyThemeColor(LegoS32 p_index)
 {
-	// Map covers only the 6 standard circuits (24 = 6 * 4); the special 7th circuit (cf.
-	// m_circuitIndex != 6 in CircuitRaceScreen::Update) has no entry, so callers pass index
-	// 24..27 for it -- a latent retail OOB read (matching). Give it a dark purple border.
-	if (p_index < 0 || p_index >= static_cast<LegoS32>(sizeOfArray(g_singleRaceVisualStateMap))) {
-		VisualStateColor purple = {{0xff600040}}; // RGB(64, 0, 96), packed A,B,G,R
-		m_borderFrame.SetBorderColors(&purple);
-		return;
-	}
-
 	m_borderFrame.SetBorderColors(&g_singleRaceVisualStates[g_singleRaceVisualStateMap[p_index]]);
 }
