@@ -163,9 +163,7 @@ LegoS32 RaceForceFeedback::UpdateSurfacePulse(LegoFloat p_forwardSpeed)
 // FUNCTION: LEGORACERS 0x00421fe0
 void RaceForceFeedback::SetSurfaceIntensity(LegoFloat p_intensity)
 {
-	m_surfaceIntensity = p_intensity;
-
-	if (p_intensity == 0.0f) {
+	if ((m_surfaceIntensity = p_intensity) == 0.0f) {
 		if (m_surfaceMode) {
 			m_surfaceMode = 0;
 			Stop();
@@ -354,22 +352,19 @@ void RaceForceFeedback::CreateEngineEffect()
 }
 
 // FUNCTION: LEGORACERS 0x004222b0
-undefined4 RaceForceFeedback::UpdateEngineEffect(LegoFloat p_forwardSpeed)
+void RaceForceFeedback::UpdateEngineEffect(LegoFloat p_forwardSpeed)
 {
-	// 64-bit compatibility: the original returned the device pointer here; only its
-	// truthiness is meaningful.
-	undefined4 result = m_device != NULL;
 	if (!m_device) {
-		return result;
+		return;
 	}
 
 	LPDIRECTINPUTEFFECT effect = m_engineEffect;
 	if (!effect) {
-		return result;
+		return;
 	}
 
 	if (!m_engineEffectActive) {
-		return result;
+		return;
 	}
 
 	if (p_forwardSpeed < 0.0f) {
@@ -391,6 +386,5 @@ undefined4 RaceForceFeedback::UpdateEngineEffect(LegoFloat p_forwardSpeed)
 	effectParams.dwSize = sizeof(effectParams);
 	effectParams.cbTypeSpecificParams = sizeof(periodicParams);
 	effectParams.lpvTypeSpecificParams = &periodicParams;
-	result = effect->SetParameters(&effectParams, DIEP_TYPESPECIFICPARAMS);
-	return result;
+	effect->SetParameters(&effectParams, DIEP_TYPESPECIFICPARAMS);
 }
